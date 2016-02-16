@@ -10,9 +10,11 @@ namespace Parser {
     public interface IInvoker {
         LambdaExpression Invoke(Type ruleType);
     }
+
     public interface IGroupInvoker {
-        LambdaExpression Invoke(IEnumerable<LambdaExpression> exprs);
+        LambdaExpression Invoke();
     }
+
     public class ReduceRuleInvoker<T, TResult> : IInvoker {
         public LambdaExpression Invoke(Type ruleType) {
             var rule = (IReduceRule<T, TResult>)ruleType.CreateInstance();
@@ -24,11 +26,16 @@ namespace Parser {
         }
     }
 
-    public class ReduceInvoker<T, TResult> : IGroupInvoker {
-        public LambdaExpression Invoke(IEnumerable<LambdaExpression> exprs) {
-            var converted = exprs.Select(e => (Expression<Func<IEnumerable<T>, TResult, TResult>>)e);
-            var result = converted.Aggregate((curr, next)=> curr.Concat(next));
+    public class ReduceInvoker<T, TResult> : GroupInvokerBase {
+        public ReduceInvoker(IEnumerable<LambdaExpression> exprs) : base(exprs) {
+        }
+
+        public override LambdaExpression Invoke() {
+            var converted = Exprs.Select(e => (Expression<Func<IEnumerable<T>, TResult, TResult>>)e);
+            var result = converted.Aggregate((curr, next) => curr.Concat(next));
             return result;
         }
+
+
     }
 }

@@ -17,11 +17,15 @@ namespace Parser {
         }
     }
 
-    public class RuleGroupInvoker<T> : IGroupInvoker {
-        public LambdaExpression Invoke(IEnumerable<LambdaExpression> exprs) {
-            var converted = exprs.Select(e => (Expression<Func<T, T>>)e);
+    public class RuleGroupInvoker<T> : GroupInvokerBase {
+        public RuleGroupInvoker(IEnumerable<LambdaExpression> exprs) : base(exprs) {
+        }
+
+        public override LambdaExpression Invoke() {
+            var converted = Exprs.Select(e => (Expression<Func<T, T>>)e);
             var result = converted.Aggregate((curr, next) => curr.Concat(next));
             return result;
         }
+
     }
 }

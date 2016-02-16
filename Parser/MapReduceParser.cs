@@ -75,28 +75,35 @@ namespace Parser {
         }
         private Result MapRuleAction(XElement token, IEnumerable<Result> results) {
             if(!results.Where(r => r.IsSuccessed).Any()) return new Result(token, false, null);
-            Type source = results.ElementAt(0).SourceType;
-            Type target = results.ElementAt(0).TargetType;
+            var p = results.Where(r => r.IsSuccessed).First();
+            Type source = p.SourceType;
+            Type target = p.TargetType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(MapGroupInvoker<,>), source, target)
-                           .CreateInstance();
-            var expr = invoker.Invoke(results.Select(r => r.Expression));
-            return new Result(token, true, expr);
+                           .CreateInstance(results.Where(r => r.IsSuccessed).Select(r => r.Expression));
+            var expr = invoker.Invoke();
+            return new Result(token, true, expr, source, target);
         }
         private Result MapAction(XElement token, Result init, Result map) {
-            return null;
+            if (!init.IsSuccessed || !map.IsSuccessed) return new Result(token, false, null);
+            Type source = init.SourceType;
+            Type target = map.TargetType;
+            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(InitMapInvoker<,>), source, target)
+                           .CreateInstance(init.Expression, map.Expression);
+            var expr = invoker.Invoke();
+            return new Result(token, true, expr, source, target);
         }
         private Result InitAction(XElement token, IEnumerable<Result> results) {
             if(!results.Where(r => r.IsSuccessed).Any()) return new Result(token, false, null);
             Type source = results.ElementAt(0).SourceType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(RuleGroupInvoker<>), source)
-                           .CreateInstance();
-            var expr = invoker.Invoke(results.Select(r => r.Expression));
-            return new Result(token, true, expr);
+                           .CreateInstance(results.Where(r=>r.IsSuccessed).Select(r => r.Expression));
+            var expr = invoker.Invoke();
+            return new Result(token, true, expr, source);
         }
         public Result ReduceParser(XElement token) {
-            if(token.Name == RegisterKeys.Reduce) {
+            if (token.Name == RegisterKeys.Reduce) {
                 List<Result> results = new List<Result>();
-                foreach(var t in token.Elements()) {
+                foreach (var t in token.Elements()) {
                     results.Add(ReduceRuleParser(t));
                 }
                 return ReduceAction(token, results.Where(r => r.IsSuccessed));
@@ -104,13 +111,14 @@ namespace Parser {
                 return new Result(token, false, null);
             }
         }
+        
         private Result ReduceAction(XElement token, IEnumerable<Result> results) {
             if(!results.Any()) return new Result(token, false, null);
             Type source = results.ElementAt(0).SourceType;
             Type target = results.ElementAt(0).TargetType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(ReduceInvoker<,>), source, target)
-                           .CreateInstance();
-            var expr = invoker.Invoke(results.Select(r => r.Expression));
+                           .CreateInstance(results.Where(r => r.IsSuccessed).Select(r => r.Expression));
+            var expr = invoker.Invoke();
             return new Result(token, true, expr);
         }
         public Result ReduceRuleParser(XElement token) {

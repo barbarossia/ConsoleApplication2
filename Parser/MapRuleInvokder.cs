@@ -16,12 +16,36 @@ namespace Parser {
             return Expression.Lambda<Func<T, IEnumerable<TResult>>>(i, para1);
         }
     }
+    public abstract class GroupInvokerBase : IGroupInvoker {
+        public GroupInvokerBase(IEnumerable<LambdaExpression> exprs) {
+            Exprs = exprs;
+        }
 
-    public class MapGroupInvoker<T, TResult> : IGroupInvoker {
-        public LambdaExpression Invoke(IEnumerable<LambdaExpression> exprs) {
-            var converted = exprs.Select(e => (Expression<Func<T, IEnumerable<TResult>>>)e);
+        public IEnumerable<LambdaExpression> Exprs { get; private set; }
+        public abstract LambdaExpression Invoke();
+    }
+    public class MapGroupInvoker<T, TResult> : GroupInvokerBase {
+        public MapGroupInvoker(IEnumerable<LambdaExpression> exprs) : base(exprs) {
+        }
+
+        public override LambdaExpression Invoke() {
+            var converted = Exprs.Select(e => (Expression<Func<T, IEnumerable<TResult>>>)e);
             var result = converted.Aggregate((curr, next) => curr.Concat(next));
             return result;
+        }
+    }
+    public class InitMapInvoker<T, TResult> : IGroupInvoker {
+        private Expression<Func<T, T>> _init;
+        private Expression<Func<T, IEnumerable<TResult>>> _map;
+
+
+        public InitMapInvoker(LambdaExpression init, LambdaExpression map)  {
+            _init = (Expression<Func<T, T>>)init;
+            _map = (Expression<Func<T, IEnumerable<TResult>>>)map;
+        }
+
+        public LambdaExpression Invoke() {
+            return _init.Concat(_map);
         }
     }
 }

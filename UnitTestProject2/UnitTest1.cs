@@ -125,5 +125,29 @@ namespace UnitTestProject2 {
             IEnumerable<Test3> result = func(t2);
             Assert.AreEqual(13, result.Count());
         }
+
+        [TestMethod]
+        public void TestInitAndMap() {
+            string xml = @"
+                <Map>
+                    <Rule Type = 'IninValueOnT1' />
+                    <MapRule Type = 'MapRuleOnT1IfTrue' />
+                </Map>";
+            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
+            Context ctx = new Context();
+            ctx.Items.Add("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
+            ctx.Items.Add("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+
+            MapReduceParser parser = new MapReduceParser(ctx);
+
+            var parserResult = parser.MapParser(_xDoc.Element("Map"));
+            var resultFunc = (Expression<Func<Test1, IEnumerable<Test2>>>)parserResult.Expression;
+
+            Func<Test1, IEnumerable<Test2>> func = resultFunc.Compile();
+
+            var t1 = new Test1() { A = 10 };
+            IEnumerable<Test2> result = func(t1);
+            Assert.AreEqual(10, result.Count());
+        }
     }
 }
