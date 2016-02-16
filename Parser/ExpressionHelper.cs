@@ -77,5 +77,12 @@ namespace Parser {
             return Expression.Lambda<Func<T, IEnumerable<TResult>>>(block, input);
         }
 
+        public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TResult>(this Expression<Func<T, T>> expr1, Expression<Func<T, IEnumerable<TResult>>> expr2) {
+            var input = expr1.Parameters[0];
+            var invoker = Expression.Invoke(expr2, Expression.Invoke(expr1, input));
+
+            return Expression.Lambda<Func<T, IEnumerable<TResult>>>(invoker, input);
+        }
+
     }
 }
