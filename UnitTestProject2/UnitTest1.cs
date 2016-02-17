@@ -22,8 +22,9 @@ namespace UnitTestProject2 {
             Context ctx = new Context();
             ctx.Items.Add("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
             ctx.Items.Add("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
-            MapReduceParser parser = new MapReduceParser(ctx);
-            var parserResult = parser.ReduceParser(_xDoc.Element("Reduce"));
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Reduce"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
+            var parserResult = parser.ReduceParser();
             var resultFunc = (Expression<Func<IEnumerable<Test2>, Test1, Test1>>)parserResult.Expression;
 
             Func<IEnumerable<Test2>, Test1, Test1> func = resultFunc.Compile();
@@ -33,6 +34,34 @@ namespace UnitTestProject2 {
             Test1 result = func(t2List, t1);
             Assert.AreEqual(3, result.Result);
             Assert.AreEqual(2, result.Details.Count());
+        }
+        [TestMethod]
+        public void TestReduceNoItems() {
+            string xml = @"
+                    <Reduce>
+    </Reduce>";
+            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
+            Context ctx = new Context();
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Reduce"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
+            var parserResult = parser.ReduceParser();
+            Assert.IsFalse(parserResult.IsSuccessed);
+            Assert.IsInstanceOfType(parserResult.Error, typeof(SyntaxException));
+        }
+        [TestMethod]
+        public void TestReduceWithNotExpected() {
+            string xml = @"
+                    <Reduce>
+ <Rule Type = 'IninValueOnT2' />
+    </Reduce>";
+            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
+            Context ctx = new Context();
+            ctx.Items.Add("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Reduce"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
+            var parserResult = parser.ReduceParser();
+            Assert.IsFalse(parserResult.IsSuccessed);
+            Assert.IsInstanceOfType(parserResult.Error, typeof(SyntaxException));
         }
 
         [TestMethod]
@@ -44,10 +73,9 @@ namespace UnitTestProject2 {
             XDocument _xDoc = _xDoc = XDocument.Parse(xml);
             Context ctx = new Context();
             ctx.Items.Add("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
-
-            MapReduceParser parser = new MapReduceParser(ctx);
-
-            var parserResult = parser.MapParser(_xDoc.Element("Map"));
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Map"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
+            var parserResult = parser.MapParser();
             var resultFunc = (Expression<Func<Test2, Test2>>)parserResult.Expression;
 
             Func<Test2, Test2> func = resultFunc.Compile();
@@ -68,10 +96,10 @@ namespace UnitTestProject2 {
             Context ctx = new Context();
             ctx.Items.Add("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
             ctx.Items.Add("IninValueOnT2Add", "UnitTestProject2.IninValueOnT2Add, UnitTestProject2");
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Map"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
 
-            MapReduceParser parser = new MapReduceParser(ctx);
-
-            var parserResult = parser.MapParser(_xDoc.Element("Map"));
+            var parserResult = parser.MapParser();
             var resultFunc = (Expression<Func<Test2, Test2>>)parserResult.Expression;
 
             Func<Test2, Test2> func = resultFunc.Compile();
@@ -90,10 +118,10 @@ namespace UnitTestProject2 {
             XDocument _xDoc = _xDoc = XDocument.Parse(xml);
             Context ctx = new Context();
             ctx.Items.Add("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Map"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
 
-            MapReduceParser parser = new MapReduceParser(ctx);
-
-            var parserResult = parser.MapParser(_xDoc.Element("Map"));
+            var parserResult = parser.MapParser();
             var resultFunc = (Expression<Func<Test2, IEnumerable<Test3>>>)parserResult.Expression;
 
             Func<Test2, IEnumerable<Test3>> func = resultFunc.Compile();
@@ -114,9 +142,10 @@ namespace UnitTestProject2 {
             Context ctx = new Context();
             ctx.Items.Add("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
             ctx.Items.Add("MapRuleOnT2Add", "UnitTestProject2.MapRuleOnT2Add, UnitTestProject2");
-            MapReduceParser parser = new MapReduceParser(ctx);
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Map"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
 
-            var parserResult = parser.MapParser(_xDoc.Element("Map"));
+            var parserResult = parser.MapParser();
             var resultFunc = (Expression<Func<Test2, IEnumerable<Test3>>>)parserResult.Expression;
 
             Func<Test2, IEnumerable<Test3>> func = resultFunc.Compile();
@@ -138,9 +167,10 @@ namespace UnitTestProject2 {
             ctx.Items.Add("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
             ctx.Items.Add("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
 
-            MapReduceParser parser = new MapReduceParser(ctx);
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Map"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
 
-            var parserResult = parser.MapParser(_xDoc.Element("Map"));
+            var parserResult = parser.MapParser();
             var resultFunc = (Expression<Func<Test1, IEnumerable<Test2>>>)parserResult.Expression;
 
             Func<Test1, IEnumerable<Test2>> func = resultFunc.Compile();
@@ -148,6 +178,53 @@ namespace UnitTestProject2 {
             var t1 = new Test1() { A = 10 };
             IEnumerable<Test2> result = func(t1);
             Assert.AreEqual(10, result.Count());
+        }
+        [TestMethod]
+        public void TestInitAndMapWithWrongSequence() {
+            string xml = @"
+                <Map>
+                    <MapRule Type = 'MapRuleOnT1IfTrue' />
+                    <Rule Type = 'IninValueOnT1' />
+                </Map>";
+            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
+            Context ctx = new Context();
+            ctx.Items.Add("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
+            ctx.Items.Add("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("Map"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
+
+            var parserResult = parser.MapParser();
+        }
+        [TestMethod]
+        public void TestMapReduce() {
+            string xml = @"
+            <MapReduce>
+                <Map>
+                    <MapRule Type = 'MapRuleOnT1IfTrue' />
+                </Map>
+             <Reduce>
+                    <ReduceRule Type = 'ReduceRuleOnT1' />
+                    <ReduceRule Type = 'AssignRuleOnT1' />
+                </Reduce>
+            </MapReduce>";
+            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
+            Context ctx = new Context();
+            ctx.Items.Add("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            ctx.Items.Add("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
+            ctx.Items.Add("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
+
+            ITokenManagement tokenBuffer = new TokenManagement(_xDoc.Element("MapReduce"), ctx);
+            MapReduceParser parser = new MapReduceParser(tokenBuffer);
+
+            var parserResult = parser.Execute();
+            var resultFunc = (Expression<Func<Test1, Test1>>)parserResult.Expression;
+
+            Func<Test1, Test1> func = resultFunc.Compile();
+
+            var t1 = new Test1() { A = 10};
+            Test1 result = func(t1);
+            Assert.AreEqual(10, result.Details.Count());
         }
     }
 }

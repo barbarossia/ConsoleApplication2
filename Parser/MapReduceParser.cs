@@ -9,130 +9,190 @@ using System.Xml.Linq;
 
 namespace Parser {
     public class MapReduceParser {
-        private Context ctx;
-        public MapReduceParser(Context context) {
-            ctx = context;
+        private ITokenManagement tokenManagement;
+        private Token currentToken;
+        public MapReduceParser(ITokenManagement tokenMgmt) {
+            tokenManagement = tokenMgmt;
+            currentToken = tokenManagement.Root;
         }
-        public Result MapParser(XElement token) {
-            if(token.Name == RegisterKeys.Map) {
+        private void Advance() {
+            currentToken = tokenManagement.GetNextToken(currentToken);
+        }
+        public Result Execute() {
+            if(currentToken.Name == RegisterKeys.MapReduce) {
                 Result result = null;
-                var initResult = InitListParser(token);
-                var mapResult = MapRuleListParser(token);
-                if(initResult.IsSuccessed && mapResult.IsSuccessed) {
-                    result = MapAction(token, initResult, mapResult);
-                } else if(initResult.IsSuccessed) {
-                    result = new Result(token, true, initResult.Expression);
-                } else if(mapResult.IsSuccessed) {
-                    result = new Result(token, true, mapResult.Expression);
+                Advance();
+                var mapResult = MapParser();
+                if(mapResult.IsSuccessed) {
+                    var reduceResult = ReduceParser();
+                    if(reduceResult.IsSuccessed) {
+                        result = MapReduceAction(mapResult, reduceResult);
+                        return result;
+                    } else {
+                        return new Result(reduceResult.Token, false, null, new SyntaxException(""));
+                    }
                 } else {
-                    result = new Result(token, false, null);
+                    return new Result(mapResult.Token, false, null, new SyntaxException(""));
+                }
+            } else {
+                return new Result(currentToken, false, null, new SyntaxException(""));
+            }
+        }
+        private Result MapReduceAction(Result mapResult, Result reduceResult) {
+            Type source = mapResult.Token.SourceType;
+            Type target = reduceResult.Token.SourceType;
+            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(MapReduceInvoker<,>), source, target)
+                           .CreateInstance(mapResult.Expression, reduceResult.Expression);
+            var expr = invoker.Invoke();
+            var token = new Token() { SourceType = source, TargetType = target };
+            return new Result(token, true, expr);
+        }
+
+        public Result MapParser() {
+            if(currentToken.Name == RegisterKeys.Map) {
+                Result result = null;
+                Advance();
+                var initResult = InitListParser();
+                var mapResult = MapRuleListParser();
+                if(initResult.IsSuccessed && mapResult.IsSuccessed) {
+                    result = MapAction(initResult, mapResult);
+                } else if(initResult.IsSuccessed) {
+                    result = new Result(initResult.Token, true, initResult.Expression);
+                } else if(mapResult.IsSuccessed) {
+                    result = new Result(mapResult.Token, true, mapResult.Expression);
+                } else {
+                    result = new Result(currentToken, false, null, new SyntaxException(""));
                 }
                 return result;
             } else {
-                return new Result(token, false, null);
+                return new Result(currentToken, false, null, new SyntaxException(""));
             }
         }
-        public Result InitListParser(XElement token) {
+        public Result InitListParser() {
             List<Result> results = new List<Result>();
-            foreach(var t in token.Elements()) {
-                results.Add(InitParser(t));
+            Result result;
+            Token saved = currentToken;
+            do {
+                result = InitParser();
+                if(result.IsSuccessed) {
+                    results.Add(result);
+                    Advance();
+                }
+            } while(result.IsSuccessed && currentToken != null);
+            if(HasSuccessed(results)) {
+                return InitAction(results.Where(r => r.IsSuccessed));
+            } else {
+                currentToken = saved;
+                return new Result(null, false, null, new SyntaxException(""));
             }
-            return InitAction(token, results);
         }
-        public Result InitParser(XElement token) {
-            var name = token.Attribute("Type").Value;
-            if(token.Name == RegisterKeys.Rule) {
-                string ruleType = (string)ctx.Items[name];
-                Type theType = Type.GetType(ruleType);
+        public Result InitParser() {
+            if(currentToken != null && currentToken.Name == RegisterKeys.Rule) {
+                Type theType = currentToken.RuleType;
                 var method = theType.GetMethod("Execute");
-                Type source = GetType(method.GetParameters()[0].ParameterType);
-                var invoker = (IInvoker)Utilities.CreateType(typeof(RuleInvoker<>), source)
+                var invoker = (IInvoker)Utilities.CreateType(typeof(RuleInvoker<>), currentToken.SourceType)
                     .CreateInstance();
-                return new Result(token, true, invoker.Invoke(theType), source);
-            }
-            return new Result(token, false, null);
+                return new Result(currentToken, true, invoker.Invoke(theType));
+            } 
+            return new Result(currentToken, false, null);
         }
-        public Result MapRuleListParser(XElement token) {
+        public Result MapRuleListParser() {
             List<Result> results = new List<Result>();
-            foreach(var t in token.Elements()) {
-                results.Add(MapRuleParser(t));
+            Result result;
+            Token saved = currentToken;
+            do {
+                result = MapRuleParser();
+                if(result.IsSuccessed) {
+                    results.Add(result);
+                    Advance();
+                }
+            } while(result.IsSuccessed && currentToken != null);
+            if(HasSuccessed(results)) {
+                return MapRuleAction(results.Where(r => r.IsSuccessed));
+            } else {
+                currentToken = saved;
+                return new Result(null, false, null, new SyntaxException(""));
             }
-            return MapRuleAction(token, results);
         } 
-        public Result MapRuleParser(XElement token) {
-            var name = token.Attribute("Type").Value;
-            if(token.Name == RegisterKeys.MapRule) {
-                string ruleType = (string)ctx.Items[name];
-                Type theType = Type.GetType(ruleType);
+        public Result MapRuleParser() {
+            if(currentToken != null && currentToken.Name == RegisterKeys.MapRule) {
+                Type theType = currentToken.RuleType;
                 var method = theType.GetMethod("Execute");
-                Type source = GetType(method.GetParameters()[0].ParameterType);
-                Type target = GetType(method.ReturnType);
-                var invoker = (IInvoker)Utilities.CreateType(typeof(MapRuleInvoker<, >), source, target)
+                var invoker = (IInvoker)Utilities.CreateType(typeof(MapRuleInvoker<, >), currentToken.SourceType, currentToken.TargetType)
                     .CreateInstance();
-                return new Result(token, true, invoker.Invoke(theType), source, target);
-            }
-            return new Result(token, false, null);
+                return new Result(currentToken, true, invoker.Invoke(theType));
+            } 
+            return new Result(currentToken, false, null);
         }
-        private Result MapRuleAction(XElement token, IEnumerable<Result> results) {
-            if(!results.Where(r => r.IsSuccessed).Any()) return new Result(token, false, null);
+        private Result MapRuleAction(IEnumerable<Result> results) {
             var p = results.Where(r => r.IsSuccessed).First();
-            Type source = p.SourceType;
-            Type target = p.TargetType;
+            Type source = p.Token.SourceType;
+            Type target = p.Token.TargetType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(MapGroupInvoker<,>), source, target)
                            .CreateInstance(results.Where(r => r.IsSuccessed).Select(r => r.Expression));
             var expr = invoker.Invoke();
-            return new Result(token, true, expr, source, target);
+            var token = new Token() { SourceType = source, TargetType = target };
+            return new Result(token, true, expr);
         }
-        private Result MapAction(XElement token, Result init, Result map) {
-            if (!init.IsSuccessed || !map.IsSuccessed) return new Result(token, false, null);
-            Type source = init.SourceType;
-            Type target = map.TargetType;
+        private Result MapAction(Result init, Result map) {
+            Type source = init.Token.SourceType;
+            Type target = map.Token.TargetType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(InitMapInvoker<,>), source, target)
                            .CreateInstance(init.Expression, map.Expression);
             var expr = invoker.Invoke();
-            return new Result(token, true, expr, source, target);
+            var token = new Token() { SourceType = source, TargetType = target };
+            return new Result(token, true, expr);
         }
-        private Result InitAction(XElement token, IEnumerable<Result> results) {
-            if(!results.Where(r => r.IsSuccessed).Any()) return new Result(token, false, null);
-            Type source = results.ElementAt(0).SourceType;
+        private Result InitAction(IEnumerable<Result> results) {
+            Type source = results.First().Token.SourceType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(RuleGroupInvoker<>), source)
-                           .CreateInstance(results.Where(r=>r.IsSuccessed).Select(r => r.Expression));
+                           .CreateInstance(results.Where(r => r.IsSuccessed).Select(r => r.Expression));
             var expr = invoker.Invoke();
-            return new Result(token, true, expr, source);
+            var token = new Token() { SourceType = source };
+            return new Result(token, true, expr);
         }
-        public Result ReduceParser(XElement token) {
-            if (token.Name == RegisterKeys.Reduce) {
+        public Result ReduceParser() {
+            Token saved = currentToken;
+            if (currentToken.Name == RegisterKeys.Reduce) {
                 List<Result> results = new List<Result>();
-                foreach (var t in token.Elements()) {
-                    results.Add(ReduceRuleParser(t));
+                Advance();
+                Result result;
+                do {
+                    result = ReduceRuleParser();
+                    if(result.IsSuccessed) {
+                        results.Add(result);
+                        Advance();
+                    }
+                } while(result.IsSuccessed && currentToken !=null);
+                if(HasSuccessed(results)) {
+                    return ReduceAction(results.Where(r => r.IsSuccessed));
+                } else {
+                    currentToken = saved;
+                    return new Result(null, false, null, new SyntaxException(""));
                 }
-                return ReduceAction(token, results.Where(r => r.IsSuccessed));
             } else {
-                return new Result(token, false, null);
+                currentToken = saved;
+                return new Result(saved, false, null);
             }
         }
         
-        private Result ReduceAction(XElement token, IEnumerable<Result> results) {
-            if(!results.Any()) return new Result(token, false, null);
-            Type source = results.ElementAt(0).SourceType;
-            Type target = results.ElementAt(0).TargetType;
+        private Result ReduceAction(IEnumerable<Result> results) {
+            Type source = results.First().Token.SourceType;
+            Type target = results.First().Token.TargetType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(ReduceInvoker<,>), source, target)
                            .CreateInstance(results.Where(r => r.IsSuccessed).Select(r => r.Expression));
             var expr = invoker.Invoke();
+            var token = new Token() { SourceType = source, TargetType = target };
             return new Result(token, true, expr);
         }
-        public Result ReduceRuleParser(XElement token) {
-            var name = token.Attribute("Type").Value;
-            if(token.Name == RegisterKeys.ReduceRule) {
-                string ruleType = (string)ctx.Items[name];
-                Type theType = Type.GetType(ruleType);
+        public Result ReduceRuleParser() {
+            if(currentToken!= null && currentToken.Name == RegisterKeys.ReduceRule) {
+                Type theType = currentToken.RuleType;
                 var method = theType.GetMethod("Execute");
-                Type source = GetType(method.GetParameters()[0].ParameterType);
-                Type target = GetType(method.ReturnType);
-                LambdaExpression expression = ReduceRule(theType, source, target);
-                return new Result(token, true, expression, source, target);
+                LambdaExpression expression = ReduceRule(theType, currentToken.SourceType, currentToken.TargetType);
+                return new Result(currentToken, true, expression);
             }
-            return new Result(token, false, null);
+            return new Result(currentToken, false, null);
         }
 
         public LambdaExpression ReduceRule(Type ruleType, Type sourceType, Type targetType) {
@@ -141,12 +201,9 @@ namespace Parser {
             return invoker.Invoke(ruleType);
         }
 
-        private Type GetType(Type theType) {
-            Type result = theType;
-            if("IEnumerable`1" == theType.Name) {
-                result = theType.GenericTypeArguments[0];
-            }
-            return result;
+        private bool HasSuccessed(IEnumerable<Result> results) {
+            return results.Where(r => r.IsSuccessed).Any();
         }
+
     }
 }

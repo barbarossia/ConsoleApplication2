@@ -11,5 +11,6 @@ namespace Parser {
         public const string ReduceRule = "ReduceRule";
         public const string Map = "Map";
         public const string Reduce = "Reduce";
+        public const string MapReduce = "MapReduce";
     }
 }

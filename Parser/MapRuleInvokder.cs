@@ -48,4 +48,18 @@ namespace Parser {
             return _init.Concat(_map);
         }
     }
+    public class MapReduceInvoker<T, TResult> : IGroupInvoker {
+        private Expression<Func<T, IEnumerable<TResult>>> _map;
+        private Expression<Func<IEnumerable<TResult>, T, T>> _reduce;
+
+
+        public MapReduceInvoker(LambdaExpression map, LambdaExpression reduce) {
+            _map = (Expression<Func<T, IEnumerable<TResult>>>)map;
+            _reduce = (Expression<Func<IEnumerable<TResult>, T, T>>)reduce;
+        }
+
+        public LambdaExpression Invoke() {
+            return _map.Concat(_reduce);
+        }
+    }
 }

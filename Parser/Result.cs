@@ -10,15 +10,13 @@ namespace Parser {
     public class Result {
         public bool IsSuccessed { get; set; }
         public LambdaExpression Expression { get; set; }
-        public XElement TokenBuffer { get; set; }
-        public Type SourceType { get; set; }
-        public Type TargetType { get; set; }
-        public Result(XElement tokenBuffer, bool isSuccessed, LambdaExpression expr, Type sourceType =  null, Type targetType = null) {
+        public Token Token { get; set; }
+        public SyntaxException Error { get; set; }
+        public Result(Token token, bool isSuccessed, LambdaExpression expr, SyntaxException error = null) {
             IsSuccessed = isSuccessed;
             Expression = expr;
-            TokenBuffer = tokenBuffer;
-            SourceType = sourceType;
-            TargetType = targetType;
+            Token = token;
+            Error = error;
         }
     }
 }
