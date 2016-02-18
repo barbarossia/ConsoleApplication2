@@ -195,6 +195,12 @@ namespace UnitTestProject2 {
             MapReduceParser parser = new MapReduceParser(tokenBuffer);
 
             var parserResult = parser.MapParser();
+            var resultFunc = (Expression<Func<Test1, IEnumerable<Test2>>>)parserResult.Expression;
+            Func<Test1, IEnumerable<Test2>> func = resultFunc.Compile();
+
+            var t1 = new Test1() { A = 10 };
+            IEnumerable<Test2> result = func(t1);
+            Assert.AreEqual(10, result.Count());
         }
         [TestMethod]
         public void TestMapReduce() {

@@ -50,43 +50,77 @@ namespace Parser {
 
         public Result MapParser() {
             if(currentToken.Name == RegisterKeys.Map) {
-                Result result = null;
                 Advance();
-                var initResult = InitListParser();
-                var mapResult = MapRuleListParser();
-                if(initResult.IsSuccessed && mapResult.IsSuccessed) {
-                    result = MapAction(initResult, mapResult);
-                } else if(initResult.IsSuccessed) {
-                    result = new Result(initResult.Token, true, initResult.Expression);
-                } else if(mapResult.IsSuccessed) {
-                    result = new Result(mapResult.Token, true, mapResult.Expression);
-                } else {
-                    result = new Result(currentToken, false, null, new SyntaxException(""));
-                }
-                return result;
+                return OptionalParser((results) => MapAction(results)
+                , new ParserAndAction((results) => InitAction(results), () => InitParser())
+                , new ParserAndAction((results) => MapRuleAction(results), () => MapRuleParser()));
             } else {
                 return new Result(currentToken, false, null, new SyntaxException(""));
             }
         }
-        public Result InitListParser() {
+        public class ParserAndAction {
+            public ParserAction Action { get; set; }
+            public TerminalParser Parser { get; set; }
+            public ParserAndAction(ParserAction action, TerminalParser parser) {
+                Action = action;
+                Parser = parser;
+            }
+        }
+        private Result OptionalParser(ParserAction action, params ParserAndAction[] parsers) {
             List<Result> results = new List<Result>();
-            Result result;
+            Result lastResult = null;
             Token saved = currentToken;
+            bool last = false;
+            var iterator = parsers.GetEnumerator();
+            last = iterator.MoveNext();
             do {
-                result = InitParser();
-                if(result.IsSuccessed) {
-                    results.Add(result);
-                    Advance();
-                }
-            } while(result.IsSuccessed && currentToken != null);
-            if(HasSuccessed(results)) {
-                return InitAction(results.Where(r => r.IsSuccessed));
+                if(!last) break;
+                var parserAndAction = (ParserAndAction)iterator.Current;
+                var parser = parserAndAction.Parser;
+                var tmpReslt = parser();
+                if(tmpReslt.IsSuccessed) {
+                    var action = parserAndAction.Action;
+                    lastResult = action(tmpReslt);
+                    results.Add(lastResult);
+                    saved = currentToken;
+                } else {
+                    currentToken = saved;
+                    last = iterator.MoveNext();
+                }               
+            } while(last && currentToken != null);
+            if(lastResult!= null && lastResult.IsSuccessed && !iterator.MoveNext()) {
+                return action(results);
+            } else if(HasSuccessed(results)) {
+                return results.Where(r => r.IsSuccessed).First();
             } else {
-                currentToken = saved;
                 return new Result(null, false, null, new SyntaxException(""));
             }
         }
-        public Result InitParser() {
+        public delegate Result TerminalParser();
+        public delegate Result ParserAction(IEnumerable<Result> results);
+        private Result ListParser(ParserAction action, TerminalParser parser) {
+            List<Result> results = new List<Result>();
+            Result lastResult;
+            Token saved = currentToken;
+            do {
+                lastResult = parser();
+                if(lastResult.IsSuccessed) {
+                    results.Add(lastResult);
+                    saved = currentToken;
+                    Advance();
+                }
+            } while(lastResult.IsSuccessed && currentToken != null );
+            if(lastResult.IsSuccessed) {
+                return action(results);
+            } else {
+                return new Result(null, false, null, new SyntaxException(""));
+            }
+        }
+
+        private Result InitListParser() {
+            return OptionalParser((results) => InitAction(results), () => InitParser());
+        }
+        private Result InitParser() {
             if(currentToken != null && currentToken.Name == RegisterKeys.Rule) {
                 Type theType = currentToken.RuleType;
                 var method = theType.GetMethod("Execute");
@@ -96,23 +130,8 @@ namespace Parser {
             } 
             return new Result(currentToken, false, null);
         }
-        public Result MapRuleListParser() {
-            List<Result> results = new List<Result>();
-            Result result;
-            Token saved = currentToken;
-            do {
-                result = MapRuleParser();
-                if(result.IsSuccessed) {
-                    results.Add(result);
-                    Advance();
-                }
-            } while(result.IsSuccessed && currentToken != null);
-            if(HasSuccessed(results)) {
-                return MapRuleAction(results.Where(r => r.IsSuccessed));
-            } else {
-                currentToken = saved;
-                return new Result(null, false, null, new SyntaxException(""));
-            }
+        private Result MapRuleListParser() {
+            return OptionalParser((results) => MapRuleAction(results), () => MapRuleParser());
         } 
         public Result MapRuleParser() {
             if(currentToken != null && currentToken.Name == RegisterKeys.MapRule) {
@@ -134,7 +153,9 @@ namespace Parser {
             var token = new Token() { SourceType = source, TargetType = target };
             return new Result(token, true, expr);
         }
-        private Result MapAction(Result init, Result map) {
+        private Result MapAction(IEnumerable<Result> results) {
+            Result init = results.First();
+            Result map = results.Last();
             Type source = init.Token.SourceType;
             Type target = map.Token.TargetType;
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(InitMapInvoker<,>), source, target)
@@ -154,22 +175,8 @@ namespace Parser {
         public Result ReduceParser() {
             Token saved = currentToken;
             if (currentToken.Name == RegisterKeys.Reduce) {
-                List<Result> results = new List<Result>();
                 Advance();
-                Result result;
-                do {
-                    result = ReduceRuleParser();
-                    if(result.IsSuccessed) {
-                        results.Add(result);
-                        Advance();
-                    }
-                } while(result.IsSuccessed && currentToken !=null);
-                if(HasSuccessed(results)) {
-                    return ReduceAction(results.Where(r => r.IsSuccessed));
-                } else {
-                    currentToken = saved;
-                    return new Result(null, false, null, new SyntaxException(""));
-                }
+                return ListParser((results) => ReduceAction(results), () => ReduceRuleParser());
             } else {
                 currentToken = saved;
                 return new Result(saved, false, null);
@@ -185,7 +192,7 @@ namespace Parser {
             var token = new Token() { SourceType = source, TargetType = target };
             return new Result(token, true, expr);
         }
-        public Result ReduceRuleParser() {
+        private Result ReduceRuleParser() {
             if(currentToken!= null && currentToken.Name == RegisterKeys.ReduceRule) {
                 Type theType = currentToken.RuleType;
                 var method = theType.GetMethod("Execute");
@@ -195,14 +202,14 @@ namespace Parser {
             return new Result(currentToken, false, null);
         }
 
-        public LambdaExpression ReduceRule(Type ruleType, Type sourceType, Type targetType) {
+        private LambdaExpression ReduceRule(Type ruleType, Type sourceType, Type targetType) {
             var invoker = (IInvoker)Utilities.CreateType(typeof(ReduceRuleInvoker<, >), sourceType, targetType)
                             .CreateInstance();
             return invoker.Invoke(ruleType);
         }
 
         private bool HasSuccessed(IEnumerable<Result> results) {
-            return results.Where(r => r.IsSuccessed).Any();
+            return results.Any();
         }
 
     }
