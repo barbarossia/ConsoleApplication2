@@ -6,13 +6,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Parser {
-    public class Result {
+namespace MapReduce.Parser {
+    public class ParserResult {
         public bool IsSuccessed { get; set; }
         public LambdaExpression Expression { get; set; }
-        public Token Token { get; set; }
+        public TokenInfo Token { get; set; }
         public SyntaxException Error { get; set; }
-        public Result(Token token, bool isSuccessed, LambdaExpression expr, SyntaxException error = null) {
+        public ParserResult(TokenInfo token, bool isSuccessed, LambdaExpression expr, SyntaxException error = null) {
             IsSuccessed = isSuccessed;
             Expression = expr;
             Token = token;

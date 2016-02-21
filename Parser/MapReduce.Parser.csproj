@@ -7,8 +7,8 @@
     <ProjectGuid>{1FF01DA3-7858-4B6D-A39E-2251F4C1F561}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Parser</RootNamespace>
-    <AssemblyName>Parser</AssemblyName>
+    <RootNamespace>MapReduce.Parser</RootNamespace>
+    <AssemblyName>MapReduce.Parser</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -43,20 +43,25 @@
     <Compile Include="Context.cs" />
     <Compile Include="ExpressionHelper.cs" />
     <Compile Include="ITokenManagement.cs" />
-    <Compile Include="MapRuleInvokder.cs" />
+    <Compile Include="MapRuleInvoker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="MapReduceParser.cs" />
+    <Compile Include="Parser.cs" />
     <Compile Include="ReduceRuleInvoker.cs" />
     <Compile Include="RegisterKeys.cs" />
-    <Compile Include="Result.cs" />
+    <Compile Include="ParserResult.cs" />
     <Compile Include="RuleInvoker.cs" />
     <Compile Include="SyntaxException.cs" />
     <Compile Include="Token.cs" />
+    <Compile Include="TokenBuffer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ClassLibrary1\ClassLibrary1.csproj">
       <Project>{6f6b3b25-ec78-42e2-aa0d-67d51e86b4f5}</Project>
       <Name>ClassLibrary1</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MapReduce.Lexer\MapReduce.Lexer.csproj">
+      <Project>{b0b0c7bd-b6fe-4a39-9bb2-c66d9303f94b}</Project>
+      <Name>MapReduce.Lexer</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

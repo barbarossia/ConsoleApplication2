@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Parser {
+namespace MapReduce.Parser {
     public interface ITokenManagement {
-        Token GetNextToken(Token current);
-        Token Root { get; }
+        TokenInfo GetNextToken(TokenInfo current);
+        TokenInfo Root { get; }
     }
 
     public class TokenManagement : ITokenManagement {
@@ -18,9 +18,9 @@ namespace Parser {
             _root = root;
             ctx = context;
         }
-        public Token Root { get { return CreateSequnce(_root); } }
-        public Token GetNextToken(Token current) {
-            Token result = null;
+        public TokenInfo Root { get { return CreateSequnce(_root); } }
+        public TokenInfo GetNextToken(TokenInfo current) {
+            TokenInfo result = null;
             if(current == null) return null;
             XElement _current = current.Image;
             if(_current == null) return null;
@@ -52,19 +52,19 @@ namespace Parser {
             } 
             return result;
         }
-        private Token CreateSequnce(XElement input) {
+        private TokenInfo CreateSequnce(XElement input) {
             if(input == null) return null;
-            return new Token() { Name = input.Name.LocalName, Image = input };
+            return new TokenInfo() { Name = input.Name.LocalName, Image = input };
         }
 
-        private Token Create(XElement input) {
+        private TokenInfo Create(XElement input) {
             var name = input.Attribute("Type").Value;
             string ruleType = (string)ctx.Items[name];
             Type theType = Type.GetType(ruleType);
             var method = theType.GetMethod("Execute");
             Type source = GetType(method.GetParameters()[0].ParameterType);
             Type target = GetType(method.ReturnType);
-            return new Token() { RuleType = theType, Name = input.Name.LocalName, SourceType = source, TargetType = target, Image = input};
+            return new TokenInfo() { RuleType = theType, Name = input.Name.LocalName, SourceType = source, TargetType = target, Image = input};
         }
         private Type GetType(Type theType) {
             Type result = theType;

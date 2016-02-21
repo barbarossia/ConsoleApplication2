@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Parser {
+namespace MapReduce.Parser {
     public class SyntaxException : Exception {
         public SyntaxException(string message) : base(message) {
         }

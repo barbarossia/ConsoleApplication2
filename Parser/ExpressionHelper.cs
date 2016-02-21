@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Parser {
+namespace MapReduce.Parser {
     public static class ExpressionHelper {
         public static Expression<Func<IEnumerable<T>, TResult, TResult>> Concat<T, TResult>(this Expression<Func<IEnumerable<T>, TResult, TResult>> expr1, Expression<Func<IEnumerable<T>, TResult, TResult>> expr2) {
             ParameterExpression result = expr1.Parameters[1];

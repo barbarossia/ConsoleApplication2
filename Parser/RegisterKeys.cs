@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Parser {
+namespace MapReduce.Parser {
     public static class RegisterKeys {
         public const string Rule = "Rule";
         public const string MapRule = "MapRule";

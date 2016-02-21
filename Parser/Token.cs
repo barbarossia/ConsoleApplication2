@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Parser {
-    public class Token {
-        public Token Next { get; set; }
+namespace MapReduce.Parser {
+    public class TokenInfo {
+        public TokenInfo Next { get; set; }
         public string Name { get; set; }
         public XElement Image { get; set; }
         public Type RuleType { get; set; }

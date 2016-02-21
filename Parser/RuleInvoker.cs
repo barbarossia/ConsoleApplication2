@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Parser {
+namespace MapReduce.Parser {
     public class RuleInvoker<T> : IInvoker {
         public LambdaExpression Invoke(Type ruleType) {
             var rule = (IRule<T>)ruleType.CreateInstance();
