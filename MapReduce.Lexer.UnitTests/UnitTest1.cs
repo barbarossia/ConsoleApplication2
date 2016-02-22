@@ -137,6 +137,9 @@ namespace MapReduce.Lexer.UnitTests {
             <MapReduce>
                 <Map>
                     <MapRule Type = 'MapRuleOnT1IfTrue' />
+                    <ForEach>
+                      <Rule Type = 'IninValueOnT3'/>
+                    </ForEach>
                 </Map>
              <Reduce>
                     <ReduceRule Type = 'ReduceRuleOnT1' />
@@ -150,12 +153,47 @@ namespace MapReduce.Lexer.UnitTests {
             Assert.AreEqual(TokenType.MAPREDUCE, results[0].TokenType);
             Assert.AreEqual(TokenType.MAP, results[1].TokenType);
             Assert.AreEqual(TokenType.MAPRULE, results[2].TokenType);
-            Assert.AreEqual(TokenType.EOF, results[3].TokenType);
-            Assert.AreEqual(TokenType.REDUCE, results[4].TokenType);
-            Assert.AreEqual(TokenType.REDUCERULE, results[5].TokenType);
-            Assert.AreEqual(TokenType.REDUCERULE, results[6].TokenType);
-            Assert.AreEqual(TokenType.EOF, results[7].TokenType);
-            Assert.AreEqual(TokenType.EOF, results[8].TokenType);
+            Assert.AreEqual(TokenType.FOREACH, results[3].TokenType);
+            Assert.AreEqual(TokenType.RULE, results[4].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[5].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[6].TokenType);
+            Assert.AreEqual(TokenType.REDUCE, results[7].TokenType);
+            Assert.AreEqual(TokenType.REDUCERULE, results[8].TokenType);
+            Assert.AreEqual(TokenType.REDUCERULE, results[9].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[10].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[11].TokenType);
+        }
+        [TestMethod]
+        public void TestIgnorCase() {
+            string xml = @"
+            <mapreduce>
+                <map>
+                    <maprule type = 'mapruleont1iftrue' />
+                    <foreach>
+                      <rule type = 'ininvalueont3'/>
+                    </foreach>
+                </map>
+             <reduce>
+                    <reducerule type = 'reduceruleont1' />
+                    <reducerule type = 'assignruleont1' />
+                </reduce>
+            </mapreduce>";
+            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
+            XElement source = _xDoc.Element("mapreduce");
+            var lexer = new Lexer(source);
+            var results = lexer.Lex().ToList();
+            Assert.AreEqual(TokenType.MAPREDUCE, results[0].TokenType);
+            Assert.AreEqual(TokenType.MAP, results[1].TokenType);
+            Assert.AreEqual(TokenType.MAPRULE, results[2].TokenType);
+            Assert.AreEqual(TokenType.FOREACH, results[3].TokenType);
+            Assert.AreEqual(TokenType.RULE, results[4].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[5].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[6].TokenType);
+            Assert.AreEqual(TokenType.REDUCE, results[7].TokenType);
+            Assert.AreEqual(TokenType.REDUCERULE, results[8].TokenType);
+            Assert.AreEqual(TokenType.REDUCERULE, results[9].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[10].TokenType);
+            Assert.AreEqual(TokenType.EOF, results[11].TokenType);
         }
     }
 }

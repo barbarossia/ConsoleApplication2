@@ -27,7 +27,7 @@ namespace MapReduce.Parser {
     }
 
     public class ReduceInvoker<T, TResult> : GroupInvokerBase {
-        public ReduceInvoker(IEnumerable<LambdaExpression> exprs) : base(exprs) {
+        public ReduceInvoker(params LambdaExpression[] exprs) : base(exprs) {
         }
 
         public override LambdaExpression Invoke() {

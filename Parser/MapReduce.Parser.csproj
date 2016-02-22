@@ -42,7 +42,6 @@
   <ItemGroup>
     <Compile Include="Context.cs" />
     <Compile Include="ExpressionHelper.cs" />
-    <Compile Include="ITokenManagement.cs" />
     <Compile Include="MapRuleInvoker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Parser.cs" />
@@ -51,7 +50,7 @@
     <Compile Include="ParserResult.cs" />
     <Compile Include="RuleInvoker.cs" />
     <Compile Include="SyntaxException.cs" />
-    <Compile Include="Token.cs" />
+    <Compile Include="TokenInfo.cs" />
     <Compile Include="TokenBuffer.cs" />
   </ItemGroup>
   <ItemGroup>

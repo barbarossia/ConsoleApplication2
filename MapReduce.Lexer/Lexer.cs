@@ -9,21 +9,16 @@ namespace MapReduce.Lexer {
     public class Lexer {
         private XElement _source;
         private List<IMatcher> InitializeMatchList() {
-            List<IMatcher> matchers = new List<IMatcher>();
-            IMatcher rule = new TerminalRuleMatcher(new Pattern("Rule", TokenType.RULE));
-            IMatcher mapRule = new TerminalRuleMatcher(new Pattern("MapRule", TokenType.MAPRULE));
-            IMatcher reduceRule = new TerminalRuleMatcher(new Pattern("ReduceRule", TokenType.REDUCERULE));
-            IMatcher map = new ProductionMatcher(new Pattern("Map", TokenType.MAP));
-            IMatcher reduce = new ProductionMatcher(new Pattern("Reduce", TokenType.REDUCE));
-            IMatcher mapReduce = new ProductionMatcher(new Pattern("MapReduce", TokenType.MAPREDUCE));
+            return new List<IMatcher>() {
+            new TerminalRuleMatcher(Patterns.Rule),
+            new TerminalRuleMatcher(Patterns.MapRule),
+            new TerminalRuleMatcher(Patterns.ReduceRule),
+            new ProductionMatcher(Patterns.Map),
+            new ProductionMatcher(Patterns.Reduce),
+            new ProductionMatcher(Patterns.MapReduce),
+            new ProductionMatcher(Patterns.ForEach)
+            };
 
-            matchers.Add(rule);
-            matchers.Add(mapRule);
-            matchers.Add(reduceRule);
-            matchers.Add(map);
-            matchers.Add(reduce);
-            matchers.Add(mapReduce);
-            return matchers;
         }
         public IEnumerable<Token> Lex() {
             List < IMatcher > matchers = InitializeMatchList();
