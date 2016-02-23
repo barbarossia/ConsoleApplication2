@@ -61,8 +61,6 @@ namespace MapReduce.Parser {
             var asn1 = Expression.Assign(loc, i);
             GotoExpression ret = Expression.Return(labelTarget, asn1);
             LabelExpression lbl = Expression.Label(labelTarget, Expression.Constant(new List<TResult>()));
-
-
             BlockExpression block = Expression.Block(
                 new ParameterExpression[] { loc, para1 },
                 asn,
@@ -91,5 +89,16 @@ namespace MapReduce.Parser {
             return Expression.Lambda<Func<T, T>>(invoker, input);
         }
 
+        public static Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> Enumerate<T, TResult>(this Expression<Func<T, TResult>> expr) {
+            var func = expr.Compile();
+            Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> expr1 = (list) => list.Select(l => func(l));
+            return expr1;
+        }
+
+        public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TMid, TResult>(this Expression<Func<T, IEnumerable<TMid>>> expr1, Expression<Func<IEnumerable<TMid>, IEnumerable<TResult>>> expr2) {
+            var input = expr1.Parameters[0];
+            var invoker = Expression.Invoke(expr2, Expression.Invoke(expr1, input));
+            return Expression.Lambda<Func<T, IEnumerable<TResult>>>(invoker, input);
+        }
     }
 }

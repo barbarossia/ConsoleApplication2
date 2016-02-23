@@ -28,4 +28,26 @@ namespace MapReduce.Parser {
         }
 
     }
+
+    public class ForEachInvoker<T, TResult> : GroupInvokerBase {
+        public ForEachInvoker(params LambdaExpression[] exprs) : base(exprs) {
+        }
+
+        public override LambdaExpression Invoke() {
+            var converted = (Expression<Func<T, TResult>>)Exprs.First();
+            var result = converted.Enumerate();
+            return result;
+        }
+    }
+    public class ForEachGroupInvoker<T, TMid, TResult> : GroupInvokerBase {
+        public ForEachGroupInvoker(params LambdaExpression[] exprs) : base(exprs) {
+        }
+
+        public override LambdaExpression Invoke() {
+            var map = (Expression<Func<T, IEnumerable<TMid>>>)Exprs.First();
+            var forEach = (Expression<Func<IEnumerable<TMid>, IEnumerable<TResult>>>)Exprs.Last();
+            var result = map.Concat(forEach);
+            return result;
+        }
+    }
 }

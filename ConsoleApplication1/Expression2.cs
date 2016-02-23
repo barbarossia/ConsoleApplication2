@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -46,7 +47,6 @@ namespace ConsoleApplication1 {
             GotoExpression ret = Expression.Return(labelTarget, asn1);
             LabelExpression lbl = Expression.Label(labelTarget, Expression.Constant(new List<TResult>()));
 
-
             BlockExpression block = Expression.Block(
                 new ParameterExpression[] { loc, para1 },
                 asn,
@@ -59,6 +59,13 @@ namespace ConsoleApplication1 {
                 lbl
                 );
             return Expression.Lambda<Func<T, IEnumerable<TResult>>>(block, input);
+        }
+
+        public static Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> Enumerate<T, TResult>(this Expression<Func<T, TResult>> expr) {
+            var para2 = Expression.Parameter(typeof(IEnumerable<T>));
+            var func = expr.Compile();
+            Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> expr1 = (list2) => list2.Select(l=> func(l));
+            return expr1;
         }
     }
 

@@ -19,15 +19,9 @@ namespace UnitTestProject2 {
         <ReduceRule Type = 'ReduceRuleOnT1' />
         <ReduceRule Type = 'AssignRuleOnT1' />
     </Reduce>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Reduce");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
-            ctx.Items.Add("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
-            Parser parser = new Parser(ctx);
+            Parser parser = xml.CreateParser("Reduce");
+            parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
             Assert.IsTrue(parser.ReduceBlock());
             PrivateObject po = new PrivateObject(parser);
             ParserResult parserResult = (ParserResult)po.GetField("currentReduceResult");
@@ -44,15 +38,8 @@ namespace UnitTestProject2 {
         [TestMethod]
         public void TestReduceNoItems() {
             string xml = @"
-                    <Reduce>
-    </Reduce>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Reduce");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            Parser parser = new Parser(ctx);
+                    <Reduce></Reduce>";
+            Parser parser = xml.CreateParser("Reduce");
             Assert.IsFalse(parser.ReduceBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
         }
@@ -62,14 +49,8 @@ namespace UnitTestProject2 {
                            <Reduce>
         <Rule Type = 'IninValueOnT2' />
            </Reduce>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Reduce");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
-            Parser parser = new Parser(ctx);
+            Parser parser = xml.CreateParser("Reduce");
+            parser.AddContext("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
             Assert.IsFalse(parser.ReduceBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
         }
@@ -80,15 +61,9 @@ namespace UnitTestProject2 {
                 <Map>
                     <Rule Type = 'IninValueOnT2' />
                 </Map>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Map");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
-            
-            Parser parser = new Parser(ctx);
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
+
             Assert.IsFalse(parser.MapBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
         }
@@ -100,16 +75,9 @@ namespace UnitTestProject2 {
                     <Rule Type = 'IninValueOnT2' />
                     <Rule Type = 'IninValueOnT2Add' />
                 </Map>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Map");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
-            ctx.Items.Add("IninValueOnT2Add", "UnitTestProject2.IninValueOnT2Add, UnitTestProject2");
-
-            Parser parser = new Parser(ctx);
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
+            parser.AddContext("IninValueOnT2Add", "UnitTestProject2.IninValueOnT2Add, UnitTestProject2");
             Assert.IsFalse(parser.MapBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
         }
@@ -120,15 +88,9 @@ namespace UnitTestProject2 {
                 <Map>
                     <MapRule Type = 'MapRuleOnT2' />
                 </Map>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Map");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
 
-            Parser parser = new Parser(ctx);
             Assert.IsTrue(parser.MapBlock());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test2, IEnumerable<Test3>>>)parserResult;
@@ -147,16 +109,10 @@ namespace UnitTestProject2 {
                     <MapRule Type = 'MapRuleOnT2' />
                     <MapRule Type = 'MapRuleOnT2Add' />
                 </Map>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Map");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
-            ctx.Items.Add("MapRuleOnT2Add", "UnitTestProject2.MapRuleOnT2Add, UnitTestProject2");
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            parser.AddContext("MapRuleOnT2Add", "UnitTestProject2.MapRuleOnT2Add, UnitTestProject2");
 
-            Parser parser = new Parser(ctx);
             Assert.IsTrue(parser.MapBlock());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test2, IEnumerable<Test3>>>)parserResult;
@@ -175,16 +131,10 @@ namespace UnitTestProject2 {
                     <Rule Type = 'IninValueOnT1' />
                     <MapRule Type = 'MapRuleOnT1IfTrue' />
                 </Map>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Map");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
-            ctx.Items.Add("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
+            parser.AddContext("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
 
-            Parser parser = new Parser(ctx);
             Assert.IsTrue(parser.MapBlock());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test1, IEnumerable<Test2>>>)parserResult;
@@ -202,16 +152,10 @@ namespace UnitTestProject2 {
                     <MapRule Type = 'MapRuleOnT1IfTrue' />
                     <Rule Type = 'IninValueOnT1' />
                 </Map>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("Map");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
-            ctx.Items.Add("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
+            parser.AddContext("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
 
-            Parser parser = new Parser(ctx);
             Assert.IsFalse(parser.MapBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
             ;
@@ -228,17 +172,11 @@ namespace UnitTestProject2 {
                     <ReduceRule Type = 'AssignRuleOnT1' />
                 </Reduce>
             </MapReduce>";
-            XDocument _xDoc = _xDoc = XDocument.Parse(xml);
-            XElement source = _xDoc.Element("MapReduce");
-            var lexer = new Lexer(source);
-            var results = lexer.Lex().ToList();
-            TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
-            ctx.Items.Add("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
-            ctx.Items.Add("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
-            ctx.Items.Add("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
+            Parser parser = xml.CreateParser("MapReduce");
+            parser.AddContext("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
 
-            Parser parser = new Parser(ctx);
             Assert.IsTrue(parser.Execute());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;

@@ -13,22 +13,99 @@ namespace MapReduce.Parser {
         private TokenBuffer tokenBuffer;
         private Context context;
         private ParserResult currentResult;
+        private Stack<ParserResult> innerResults = new Stack<ParserResult>();
+        private ParserResult innerReduceResult;
         public ParserResult Result { get { return currentResult; } }
         private ParserResult currentReduceResult;
-
+        private bool isForEach = false;
+        public Context Context { get { return context; } }
         public Parser(Context ctx) {
             context = ctx;
             tokenBuffer = ctx.TokenBuffer;
         }
+        private void Action(ParserResult other) {
+            if(isForEach) {
+                ActionFor(other);
+                return;
+            }
+            if(currentResult == null) {
+                currentResult = other;
+                return;
+            }
+            currentResult = currentResult.Concat(other);
+        }
+        private void MapReduceAction() {
+            if(isForEach) {
+                var tmpCurrentResult = innerResults.Pop();
+                var tmpCurrentReduceResult = innerReduceResult;
+                if(tmpCurrentResult != null && tmpCurrentReduceResult != null &&
+                    tmpCurrentResult.Token.Name == RegisterKeys.MapRule &&
+                    tmpCurrentReduceResult.Token.Name == RegisterKeys.ReduceRule) {
+                    tmpCurrentResult = tmpCurrentResult.Concat(tmpCurrentReduceResult);
+
+                    var token = new TokenInfo(RegisterKeys.Rule, tmpCurrentResult.Token.SourceType, tmpCurrentReduceResult.Token.TargetType);
+                    var forEachResult = new ParserResult(token, true, tmpCurrentResult.Expression);
+                    innerResults.Push(forEachResult);
+                    return;
+                }
+            }
+            if(currentResult != null && currentReduceResult != null &&
+                currentResult.Token.Name == RegisterKeys.MapRule &&
+                currentReduceResult.Token.Name == RegisterKeys.ReduceRule) {
+                currentResult = currentResult.Concat(currentReduceResult);
+            }
+        }
+        private void ReduceAction(ParserResult other) {
+            if(isForEach) {
+                if(innerReduceResult == null) {
+                    innerReduceResult = other;
+                    return;
+                }
+                innerReduceResult = innerReduceResult.Concat(other);
+                return;
+            }
+            if(currentReduceResult == null) {
+                currentReduceResult = other;
+                return;
+            }
+            currentReduceResult = currentReduceResult.Concat(other);
+        }
+        private void ForEachAction() {
+            ParserResult tmpResult = innerResults.Pop();
+            Type source = tmpResult.Token.SourceType;
+            Type target = tmpResult.Token.TargetType;
+            if (tmpResult.Token.Name == RegisterKeys.MapRule) {
+                var gTarget = typeof(IEnumerable<>);
+                var mm = gTarget.MakeGenericType(target);
+                target = mm;
+            }
+            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(ForEachInvoker<,>), source, target)
+                           .CreateInstance(tmpResult.Expression);
+            var expr = invoker.Invoke();
+            var token = new TokenInfo(RegisterKeys.ForEach, source, target);
+            var forEachResult = new ParserResult(token, true, expr);
+            Action(forEachResult);
+        }
+        private void ActionFor(ParserResult other) {
+            if(!innerResults.Any()) {
+                innerResults.Push(other);
+                return;
+            }
+            var tmpResult = innerResults.Peek();
+            tmpResult = tmpResult.Concat(other);
+        }
         public bool Execute() {
+            return MapReduceBlock();
+        }
+        private bool MapReduceBlock() {
             Token t;
             bool parseSuccess = false;
             tokenBuffer.Backup();
             t = tokenBuffer.Current;
             if(t != null && t.TokenType == TokenType.MAPREDUCE) {
                 tokenBuffer.Consume();
-                if (MapBlock()) {
-                    if (ReduceBlock()) {
+                if(MapBlock()) {
+                    if(ReduceBlock()) {
                         parseSuccess = true;
                         MapReduceAction();
                     }
@@ -49,31 +126,6 @@ namespace MapReduce.Parser {
             }
             return parseSuccess;
         }
-        private void Action(ParserResult other) {
-            if(currentResult == null) {
-                currentResult = other;
-                return;
-            }
-            currentResult = currentResult.Concat(other);
-        }
-
-        private void MapReduceAction() {
-            if(currentResult != null && currentReduceResult != null &&
-                currentResult.Token.Name == RegisterKeys.MapRule &&
-                currentReduceResult.Token.Name == RegisterKeys.ReduceRule) {
-                currentResult = currentResult.Concat(currentReduceResult);
-            }
-        }
-
-        private void ReduceAction(ParserResult other) {
-            if(currentReduceResult == null) {
-                currentReduceResult = other;
-                return;
-            }
-            currentReduceResult = currentReduceResult.Concat(other);
-        }
-
-
         public bool MapBlock() {
             Token t;
             bool parseSuccess = false;
@@ -84,6 +136,7 @@ namespace MapReduce.Parser {
                 parseSuccess = true;
                 OptionalRuleListParser();
                 parseSuccess = MapRuleListParser();
+                ForEachBlock();
                 if (parseSuccess) {
                     t = tokenBuffer.Current;
                     if (t != null && t.TokenType == TokenType.EOF) {
@@ -100,17 +153,60 @@ namespace MapReduce.Parser {
             }
             return parseSuccess;
         }
-
+        private bool ForEachBlock() {
+            Token t;
+            bool parseSuccess = false;
+            tokenBuffer.Backup();
+            t = tokenBuffer.Current;
+            if(t != null && t.TokenType == TokenType.FOREACH) {
+                tokenBuffer.Consume();
+                parseSuccess = SelectionForEachListParser();
+                if(parseSuccess) {
+                    t = tokenBuffer.Current;
+                    if(t != null && t.TokenType == TokenType.EOF) {
+                        tokenBuffer.Consume();
+                        tokenBuffer.Commit();
+                        ForEachAction();
+                    } else {
+                        parseSuccess = false;
+                        currentResult = new ParserResult(false, new SyntaxException("Foreach section should have end"));
+                    }
+                }
+            }
+            if(!parseSuccess) {
+                tokenBuffer.Rollback();
+            }
+            return parseSuccess;
+        }
+        private bool SelectionForEachListParser() {
+            tokenBuffer.Backup();
+            isForEach = true;
+            bool parseSuccess = false;
+            if(RuleParser()) {
+                parseSuccess = true;
+            } else if(MapRuleParser()) {
+                parseSuccess = true;
+            } else if(MapBlock()) {
+                parseSuccess = true;
+            } else if(MapReduceBlock()) {
+                parseSuccess = true;
+            } else {
+                parseSuccess = false;
+            }
+            isForEach = false;
+            if(!parseSuccess) {
+                tokenBuffer.Rollback();
+            }
+            return parseSuccess;
+        }
         private bool OptionalRuleListParser() {
             bool parseSuccess;
             do {
                 parseSuccess = RuleParser();
-                if(parseSuccess) {
-                    tokenBuffer.Consume();
-                }
             } while(parseSuccess && tokenBuffer.Current.TokenType != TokenType.EOF);
             return true;
         }
+
         private bool RuleParser() {
             Token t = tokenBuffer.Current;
             if (t != null && t.TokenType == TokenType.RULE) {
@@ -120,6 +216,7 @@ namespace MapReduce.Parser {
                 var invoker = (IInvoker)Utilities.CreateType(typeof(RuleInvoker<>), info.SourceType)
                     .CreateInstance();
                 Action(new ParserResult(info, true, invoker.Invoke(theType)));
+                tokenBuffer.Consume();
                 return true;
             }
             return false;
@@ -130,7 +227,7 @@ namespace MapReduce.Parser {
             parseSuccess = MapRuleParser();
             if (parseSuccess) {
                 while (parseSuccess) {
-                    tokenBuffer.Consume();
+
                     parseSuccess = MapRuleParser();
                 }
                 parseSuccess = true;
@@ -140,7 +237,7 @@ namespace MapReduce.Parser {
             }
             return parseSuccess;
         } 
-        public bool MapRuleParser() {
+        private bool MapRuleParser() {
             Token t = tokenBuffer.Current;
             if (t != null && t.TokenType == TokenType.MAPRULE) {
                 TokenInfo info = Create(t.Value);
@@ -149,6 +246,7 @@ namespace MapReduce.Parser {
                 var invoker = (IInvoker)Utilities.CreateType(typeof(MapRuleInvoker<,>), info.SourceType, info.TargetType)
                    .CreateInstance();
                 Action(new ParserResult(info, true, invoker.Invoke(theType)));
+                tokenBuffer.Consume();
                 return true;        
             }
             return false;
@@ -186,7 +284,6 @@ namespace MapReduce.Parser {
             parseSuccess = ReduceRuleParser();
             if (parseSuccess) {
                 while (parseSuccess && tokenBuffer.Current.TokenType != TokenType.EOF) {
-                    tokenBuffer.Consume();
                     parseSuccess = ReduceRuleParser();
                 }
                 parseSuccess = true;
@@ -206,6 +303,7 @@ namespace MapReduce.Parser {
                 var method = theType.GetMethod("Execute");
                 LambdaExpression expression = ReduceRule(theType, info.SourceType, info.TargetType);
                 ReduceAction(new ParserResult(info, true, expression));
+                tokenBuffer.Consume();
                 return true;
             }
             return false;

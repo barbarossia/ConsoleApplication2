@@ -48,12 +48,24 @@ namespace MapReduce.Parser {
                             return MapRuleAction(other);
                         case RegisterKeys.ReduceRule:
                             return MapReduceAction(other);
+                        case RegisterKeys.ForEach:
+                            return MapForEachAction(other);
                         default:
                             return new ParserResult(false, new SyntaxException(""));
                     }
                 default:
                     return new ParserResult(false, new SyntaxException(""));
             }
+        }
+        private ParserResult MapForEachAction(ParserResult other) {
+            Type source = Token.SourceType;
+            Type mid = Token.TargetType;
+            Type target = other.Token.TargetType;
+            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(ForEachGroupInvoker<, ,>), source, mid, target)
+                           .CreateInstance(Expression, other.Expression);
+            var expr = invoker.Invoke();
+            var token = new TokenInfo(RegisterKeys.MapRule, source, target);
+            return new ParserResult(token, true, expr);
         }
         private ParserResult MapReduceAction(ParserResult other) {
             Type source = Token.SourceType;
