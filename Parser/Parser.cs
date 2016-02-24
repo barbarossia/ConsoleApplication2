@@ -14,61 +14,45 @@ namespace MapReduce.Parser {
         private Context context;
         private ParserResult currentResult;
         private Stack<ParserResult> innerResults = new Stack<ParserResult>();
-        private ParserResult innerReduceResult;
+        private Stack<ParserResult> innerReduceResults = new Stack<ParserResult>();
         public ParserResult Result { get { return currentResult; } }
         private ParserResult currentReduceResult;
-        private bool isForEach = false;
+        private int level = 0;
         public Context Context { get { return context; } }
         public Parser(Context ctx) {
             context = ctx;
             tokenBuffer = ctx.TokenBuffer;
         }
         private void Action(ParserResult other) {
-            if(isForEach) {
-                ActionFor(other);
-                return;
+            if(innerResults.Count <= level) {
+                innerResults.Push(other);
+            } else {
+                currentResult = innerResults.Pop();
+                currentResult = currentResult.Concat(other);
+                innerResults.Push(currentResult);
             }
-            if(currentResult == null) {
-                currentResult = other;
-                return;
-            }
-            currentResult = currentResult.Concat(other);
+            currentResult = innerResults.Peek();
         }
         private void MapReduceAction() {
-            if(isForEach) {
-                var tmpCurrentResult = innerResults.Pop();
-                var tmpCurrentReduceResult = innerReduceResult;
-                if(tmpCurrentResult != null && tmpCurrentReduceResult != null &&
-                    tmpCurrentResult.Token.Name == RegisterKeys.MapRule &&
-                    tmpCurrentReduceResult.Token.Name == RegisterKeys.ReduceRule) {
-                    tmpCurrentResult = tmpCurrentResult.Concat(tmpCurrentReduceResult);
-
-                    var token = new TokenInfo(RegisterKeys.Rule, tmpCurrentResult.Token.SourceType, tmpCurrentReduceResult.Token.TargetType);
-                    var forEachResult = new ParserResult(token, true, tmpCurrentResult.Expression);
-                    innerResults.Push(forEachResult);
-                    return;
-                }
-            }
+            currentResult = innerResults.Pop();
+            currentReduceResult = innerReduceResults.Pop();
             if(currentResult != null && currentReduceResult != null &&
                 currentResult.Token.Name == RegisterKeys.MapRule &&
                 currentReduceResult.Token.Name == RegisterKeys.ReduceRule) {
                 currentResult = currentResult.Concat(currentReduceResult);
+                innerResults.Push(currentResult);
             }
         }
         private void ReduceAction(ParserResult other) {
-            if(isForEach) {
-                if(innerReduceResult == null) {
-                    innerReduceResult = other;
-                    return;
-                }
-                innerReduceResult = innerReduceResult.Concat(other);
-                return;
+            if((currentReduceResult == null || innerReduceResults.Count == 0) && 
+                innerReduceResults.Count <= level) {
+                innerReduceResults.Push(other);
+            } else {
+                currentReduceResult = innerReduceResults.Pop();
+                currentReduceResult = currentReduceResult.Concat(other);
+                innerReduceResults.Push(currentReduceResult);
             }
-            if(currentReduceResult == null) {
-                currentReduceResult = other;
-                return;
-            }
-            currentReduceResult = currentReduceResult.Concat(other);
+            currentReduceResult = innerReduceResults.Peek();
         }
         private void ForEachAction() {
             ParserResult tmpResult = innerResults.Pop();
@@ -84,16 +68,10 @@ namespace MapReduce.Parser {
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.ForEach, source, target);
             var forEachResult = new ParserResult(token, true, expr);
+            level--;
             Action(forEachResult);
         }
-        private void ActionFor(ParserResult other) {
-            if(!innerResults.Any()) {
-                innerResults.Push(other);
-                return;
-            }
-            var tmpResult = innerResults.Peek();
-            tmpResult = tmpResult.Concat(other);
-        }
+
         public bool Execute() {
             return MapReduceBlock();
         }
@@ -160,6 +138,7 @@ namespace MapReduce.Parser {
             t = tokenBuffer.Current;
             if(t != null && t.TokenType == TokenType.FOREACH) {
                 tokenBuffer.Consume();
+                level++;
                 parseSuccess = SelectionForEachListParser();
                 if(parseSuccess) {
                     t = tokenBuffer.Current;
@@ -180,7 +159,6 @@ namespace MapReduce.Parser {
         }
         private bool SelectionForEachListParser() {
             tokenBuffer.Backup();
-            isForEach = true;
             bool parseSuccess = false;
             if(RuleParser()) {
                 parseSuccess = true;
@@ -193,7 +171,6 @@ namespace MapReduce.Parser {
             } else {
                 parseSuccess = false;
             }
-            isForEach = false;
             if(!parseSuccess) {
                 tokenBuffer.Rollback();
             }

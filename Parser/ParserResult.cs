@@ -73,7 +73,7 @@ namespace MapReduce.Parser {
             var invoker = (IGroupInvoker)Utilities.CreateType(typeof(MapReduceInvoker<,>), source, target)
                            .CreateInstance(Expression, other.Expression);
             var expr = invoker.Invoke();
-            var token = new TokenInfo(RegisterKeys.Rule, source, target);
+            var token = new TokenInfo(RegisterKeys.Rule, source, source);
             return new ParserResult(token, true, expr);
         }
         private ParserResult RuleAction(ParserResult other) {

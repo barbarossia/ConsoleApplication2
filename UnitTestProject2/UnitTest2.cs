@@ -61,6 +61,49 @@ namespace UnitTestProject2 {
         }
 
         [TestMethod]
+        public void MapReduceForEachMapReduce() {
+            string xml = @"
+            <MapReduce>
+                <Map>
+                    <Rule Type = 'IninValueOnT1' />
+                    <MapRule Type = 'MapRuleOnT1IfTrue' />
+                    <ForEach>
+                        <MapReduce>
+                            <Map>
+                                <MapRule Type = 'MapRuleOnT2' />
+                            </Map>
+                            <Reduce>
+                                <ReduceRule Type = 'ReduceRuleOnT2' />
+                                <ReduceRule Type = 'AssignRuleOnT2' />
+                            </Reduce>
+                        </MapReduce>
+                    </ForEach>
+                </Map>
+                <Reduce>
+                    <ReduceRule Type = 'ReduceRuleOnT1' />
+                    <ReduceRule Type = 'AssignRuleOnT1' />
+                </Reduce>
+            </MapReduce>";
+            Parser parser = xml.CreateParser("MapReduce");
+            parser.AddContext("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
+            parser.AddContext("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            parser.AddContext("ReduceRuleOnT2", "ClassLibrary1.ReduceRuleOnT2, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT2", "ClassLibrary1.AssignRuleOnT2, ClassLibrary1");
+            parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
+
+            Assert.IsTrue(parser.Execute());
+            var parserResult = parser.Result.Expression;
+            var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
+
+            Func<Test1, Test1> func = resultFunc.Compile();
+
+            var t1 = new Test1() { A = 10 };
+            Test1 result = func(t1);
+            Assert.AreEqual(10, result.Details.Count());
+        }
+        [TestMethod]
         public void ForEachMapReduce() {
             string xml = @"
                 <Map>
@@ -96,6 +139,57 @@ namespace UnitTestProject2 {
             Assert.AreEqual(10, result.Count);
             Assert.AreEqual(55, result[9].Result);
             Assert.AreEqual(10, result[9].Details.Count());
+        }
+
+        [TestMethod]
+        public void NestedForEachMapReduce() {
+            string xml = @"
+            <MapReduce>
+                <Map>
+                    <Rule Type = 'IninValueOnT1' />
+                    <MapRule Type = 'MapRuleOnT1IfTrue' />
+                    <ForEach>
+                        <MapReduce>
+                            <Map>
+                                <Rule Type = 'IninValueOnT2' />
+                                <MapRule Type = 'MapRuleOnT2' />
+                                <ForEach>
+                                    <Rule Type = 'IninValueOnT3' />
+                                </ForEach>
+                            </Map>
+                            <Reduce>
+                                <ReduceRule Type = 'ReduceRuleOnT2' />
+                                <ReduceRule Type = 'AssignRuleOnT2' />
+                            </Reduce>
+                        </MapReduce>
+                    </ForEach>
+                </Map>
+                <Reduce>
+                    <ReduceRule Type = 'ReduceRuleOnT1' />
+                    <ReduceRule Type = 'AssignRuleOnT1' />
+                </Reduce>
+            </MapReduce>";
+            Parser parser = xml.CreateParser("MapReduce");
+            parser.AddContext("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
+            parser.AddContext("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            parser.AddContext("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
+            parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            parser.AddContext("IninValueOnT3", "ClassLibrary1.IninValueOnT3, ClassLibrary1");
+            parser.AddContext("ReduceRuleOnT2", "ClassLibrary1.ReduceRuleOnT2, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT2", "ClassLibrary1.AssignRuleOnT2, ClassLibrary1");
+            parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
+
+            Assert.IsTrue(parser.Execute());
+            var parserResult = parser.Result.Expression;
+            var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
+
+            Func<Test1, Test1> func = resultFunc.Compile();
+
+            var t1 = new Test1() { A = 10 };
+            Test1 result = func(t1);
+            Assert.AreEqual(10, result.Details.Count());
+            Assert.AreEqual(220, result.Result);
         }
     }
 }
