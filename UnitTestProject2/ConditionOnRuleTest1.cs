@@ -6,10 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MapReduce.Parser.UnitTest {
-    public class IninValueOnT2Add : RuleBase<Test2> {
-        public override Test2 Execute(Test2 entity) {
-            entity.Value +=1;
-            return entity;
+    public class ConditionOnRuleTest1 : IQulification {
+        public bool IsQualified() {
+            return false;
         }
     }
 }

@@ -6,7 +6,7 @@ using ClassLibrary1;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UnitTestProject2 {
+namespace MapReduce.Parser.UnitTest {
     [TestClass]
     public class UnitTest2 {
         [TestMethod]

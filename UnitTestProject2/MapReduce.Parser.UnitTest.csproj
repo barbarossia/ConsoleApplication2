@@ -6,8 +6,8 @@
     <ProjectGuid>{0AEC8006-292B-45C3-B344-29B73EDDEE8B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>UnitTestProject2</RootNamespace>
-    <AssemblyName>UnitTestProject2</AssemblyName>
+    <RootNamespace>MapReduce.Parser.UnitTest</RootNamespace>
+    <AssemblyName>MapReduce.Parser.UnitTest</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -55,11 +55,14 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Common.cs" />
+    <Compile Include="ConditionOnRuleTest1.cs" />
     <Compile Include="IninValueOnT2Add.cs" />
     <Compile Include="MapRuleOnT2Add.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnitTest2.cs" />
+    <Compile Include="UnitTest3.cs" />
+    <Compile Include="UnitTest4.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ClassLibrary1\ClassLibrary1.csproj">

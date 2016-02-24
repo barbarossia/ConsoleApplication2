@@ -187,12 +187,10 @@ namespace MapReduce.Parser {
         private bool RuleParser() {
             Token t = tokenBuffer.Current;
             if (t != null && t.TokenType == TokenType.RULE) {
-                TokenInfo info = Create(t.Value);
-                Type theType = info.RuleType;
-                var method = theType.GetMethod("Execute");
-                var invoker = (IInvoker)Utilities.CreateType(typeof(RuleInvoker<>), info.SourceType)
-                    .CreateInstance();
-                Action(new ParserResult(info, true, invoker.Invoke(theType)));
+                var result = ParserResult.CreateRule(t, context);
+                if (result!= null) { 
+                    Action(result);
+                }
                 tokenBuffer.Consume();
                 return true;
             }
@@ -217,12 +215,10 @@ namespace MapReduce.Parser {
         private bool MapRuleParser() {
             Token t = tokenBuffer.Current;
             if (t != null && t.TokenType == TokenType.MAPRULE) {
-                TokenInfo info = Create(t.Value);
-                Type theType = info.RuleType;
-                var method = theType.GetMethod("Execute");
-                var invoker = (IInvoker)Utilities.CreateType(typeof(MapRuleInvoker<,>), info.SourceType, info.TargetType)
-                   .CreateInstance();
-                Action(new ParserResult(info, true, invoker.Invoke(theType)));
+                var result = ParserResult.CreateRule(t, context);
+                if(result != null) {
+                    Action(result);
+                }
                 tokenBuffer.Consume();
                 return true;        
             }
@@ -275,38 +271,14 @@ namespace MapReduce.Parser {
         private bool ReduceRuleParser() {
             Token t = tokenBuffer.Current;
             if (t!= null && t.TokenType == TokenType.REDUCERULE) {
-                TokenInfo info = Create(t.Value);
-                Type theType = info.RuleType;
-                var method = theType.GetMethod("Execute");
-                LambdaExpression expression = ReduceRule(theType, info.SourceType, info.TargetType);
-                ReduceAction(new ParserResult(info, true, expression));
+                var result = ParserResult.CreateRule(t, context);
+                if(result != null) {
+                    ReduceAction(result);
+                }
                 tokenBuffer.Consume();
                 return true;
             }
             return false;
-        }
-
-        private LambdaExpression ReduceRule(Type ruleType, Type sourceType, Type targetType) {
-            var invoker = (IInvoker)Utilities.CreateType(typeof(ReduceRuleInvoker<, >), sourceType, targetType)
-                            .CreateInstance();
-            return invoker.Invoke(ruleType);
-        }
-
-        private TokenInfo Create(XElement input) {
-            var name = input.Attribute("Type").Value;
-            string ruleType = (string)context.Items[name];
-            Type theType = Type.GetType(ruleType);
-            var method = theType.GetMethod("Execute");
-            Type source = GetType(method.GetParameters()[0].ParameterType);
-            Type target = GetType(method.ReturnType);
-            return new TokenInfo(input.Name.LocalName, input, theType, source, target);
-        }
-        private Type GetType(Type theType) {
-            Type result = theType;
-            if ("IEnumerable`1" == theType.Name) {
-                result = theType.GenericTypeArguments[0];
-            }
-            return result;
         }
     }
 }

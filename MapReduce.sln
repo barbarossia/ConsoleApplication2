@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApplication1", "Cons
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapReduce.Parser", "Parser\MapReduce.Parser.csproj", "{1FF01DA3-7858-4B6D-A39E-2251F4C1F561}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject2", "UnitTestProject2\UnitTestProject2.csproj", "{0AEC8006-292B-45C3-B344-29B73EDDEE8B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapReduce.Parser.UnitTest", "UnitTestProject2\MapReduce.Parser.UnitTest.csproj", "{0AEC8006-292B-45C3-B344-29B73EDDEE8B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapReduce.Lexer", "MapReduce.Lexer\MapReduce.Lexer.csproj", "{B0B0C7BD-B6FE-4A39-9BB2-C66D9303F94B}"
 EndProject

@@ -8,7 +8,7 @@ namespace ClassLibrary1 {
     public interface IRule<T> : IRule<T, T> {
     }
     public interface IRule {
-        string RuleKind { get; }
+        RuleKind RuleKind { get; }
     }
     public interface IRule<T, R> : IRule {
         R Execute(T entity);

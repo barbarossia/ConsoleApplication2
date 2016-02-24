@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace ConsoleApplication5 {
     public class ConditionToken : Token {
-        public ICondition Condition { get; private set; }
+        public IQulification Condition { get; private set; }
         public override INode Accept<T, R>(Compiler<T, R> compiler) {
             return compiler.Compile(this);
         }
         public ConditionToken(string ruleType, Context ctx) {
             string theType = (string)ctx.Items[ruleType];
             var the = Type.GetType(theType);
-            Condition = (ICondition)the.CreateInstance();
+            Condition = (IQulification)the.CreateInstance();
 
         }
 

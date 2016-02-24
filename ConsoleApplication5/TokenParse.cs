@@ -99,7 +99,7 @@ namespace ConsoleApplication5 {
             XElement conditionElement = _inputElement.Elements().ElementAt(0);
             TokenParse conditionparse = new TokenParse(conditionElement);
             ConditionToken condition = (ConditionToken)conditionparse.Parse(ctx);
-            bool canContinue = condition.Condition.Is();
+            bool canContinue = condition.Condition.IsQualified();
             if (canContinue) {
                 XElement ifElement = _inputElement.Elements().ElementAt(1);
                 TokenParse ifParse = new TokenParse(ifElement);

@@ -118,8 +118,8 @@ namespace UnitTestProject1 {
         }
     }
 
-    class ConditionRuleOnT1False : ICondition {
-        public bool Is() {
+    class ConditionRuleOnT1False : IQulification {
+        public bool IsQualified() {
             return false; 
         }
     }

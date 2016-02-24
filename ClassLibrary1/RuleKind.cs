@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace ClassLibrary1 {
-    public interface IReduceRule<T, TResult> : IRule{ 
-        TResult Execute(IEnumerable<T> list, TResult result);
+    public enum RuleKind {
+        MapRule,
+        ReduceRule,
+        Rule ,
     }
 }

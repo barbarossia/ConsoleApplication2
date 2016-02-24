@@ -40,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ICondition.cs" />
+    <Compile Include="IQulification.cs" />
     <Compile Include="IMapRule.cs" />
     <Compile Include="IninValueOnT1.cs" />
     <Compile Include="IReduceRule.cs" />
@@ -49,7 +49,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReduceRuleBase.cs" />
     <Compile Include="RuleBase.cs" />
-    <Compile Include="RuleKinds.cs" />
+    <Compile Include="RuleKind.cs" />
     <Compile Include="Test1.cs" />
     <Compile Include="Test2.cs" />
     <Compile Include="Test3.cs" />

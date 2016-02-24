@@ -68,11 +68,11 @@ namespace ConsoleApplication1 {
                     .Select(t => new Test3() { C = t })
                     .ToList();
             }
-            public string RuleKind
+            public RuleKind RuleKind
             {
                 get
                 {
-                    return RuleKinds.MapRule;
+                    return RuleKind.MapRule;
                 }
             }
         }

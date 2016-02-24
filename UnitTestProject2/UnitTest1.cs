@@ -9,7 +9,7 @@ using MapReduce.Parser;
 using System.Linq.Expressions;
 using MapReduce.Lexer;
 
-namespace UnitTestProject2 {
+namespace MapReduce.Parser.UnitTest {
     [TestClass]
     public class UnitTest1 {
         [TestMethod]

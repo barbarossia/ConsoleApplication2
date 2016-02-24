@@ -16,8 +16,8 @@ namespace ConsoleApplication5 {
         }
 
         public Func<bool> Compile() {
-            var rule = (ICondition)RuleType.CreateInstance();
-            return () => rule.Is();
+            var rule = (IQulification)RuleType.CreateInstance();
+            return () => rule.IsQualified();
         }
 
         public Type RuleType { get; set; }

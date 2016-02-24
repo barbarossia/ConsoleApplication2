@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace ClassLibrary1 {
     public abstract class ReduceRuleBase<T, TResult> : IReduceRule<T, TResult> {
-        public string RuleKind
+        public RuleKind RuleKind
         {
             get
             {
-                return RuleKinds.ReduceRule;
+                return RuleKind.ReduceRule;
             }
         }
         public abstract TResult Execute(IEnumerable<T> list, TResult t1);

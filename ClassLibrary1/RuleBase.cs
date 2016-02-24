@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace ClassLibrary1 {
     public abstract class RuleBase<T> : IRule<T> {
-        public string RuleKind
+        public RuleKind RuleKind
         {
             get
             {
-                return RuleKinds.Rule;
+                return RuleKind.Rule;
             }
         }
         public abstract T Execute(T entity);
