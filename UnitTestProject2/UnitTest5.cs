@@ -1,22 +1,36 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Xml;
-using System.Xml.Linq;
-using ClassLibrary1;
-using System.Collections.Generic;
-using System.Linq;
-using MapReduce.Parser;
+﻿using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq.Expressions;
-using MapReduce.Lexer;
-using System;
+using ClassLibrary1;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace MapReduce.Parser.UnitTest {
     [TestClass]
-    public class UnitTest4 {
+    public class UnitTest5 {
         [TestMethod]
-        public void ReferenceMapReduce() {
+        public void PerfermentTest() {
+            DateTime processingBeginDateTime = DateTime.UtcNow;
+            var list = Enumerable.Range(1, 100)
+               .Select(t => new Test1() { A = t })
+               .ToList();
+
+            Func<Test1, Test1> func = Build();
+            doTests(list, func);
+            DateTime processingEndDateTime = DateTime.UtcNow;
+            var processingSeconds = (double)ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
+            Console.WriteLine(processingSeconds);
+
+        }
+        private void doTests(List<Test1> list, Func<Test1, Test1> func) {
+            foreach(var t1 in list) {
+                func(t1);
+            }
+        }
+        private Func<Test1, Test1> Build() {
             string xml1 = @"<MapReduce>
                             <Map>
-                                <MapRule Type = 'MapRuleOnT2' />
+                                <MapRule Type = 'MapRuleOnT2Test' />
                             </Map>
                             <Reduce>
                                 <ReduceRule Type = 'ReduceRuleOnT2' />
@@ -24,19 +38,19 @@ namespace MapReduce.Parser.UnitTest {
                             </Reduce>
                         </MapReduce>";
             Parser parser = xml1.CreateParser("MapReduce");
-            parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            parser.AddContext("MapRuleOnT2Test", "MapReduce.Parser.UnitTest.MapRuleOnT2Test, MapReduce.Parser.UnitTest");
             parser.AddContext("ReduceRuleOnT2", "ClassLibrary1.ReduceRuleOnT2, ClassLibrary1");
             parser.AddContext("AssignRuleOnT2", "ClassLibrary1.AssignRuleOnT2, ClassLibrary1");
             Assert.IsTrue(parser.Build());
             ParserResult t2result = parser.Result;
-            
+
             string xml2 = @"
             <MapReduce>
                 <Map>
                     <Rule Type = 'IninValueOnT1' />
-                    <MapRule Type = 'MapRuleOnT1IfTrue' />
+                    <MapRule Type = 'MapRuleOnT1Test' />
                     <ForEach>
-                        <Rule ref='MapReduceOnT2' />
+                        <Rule ref='MapReduceOnT2TestRef' />
                     </ForEach>
                 </Map>
                 <Reduce>
@@ -46,20 +60,15 @@ namespace MapReduce.Parser.UnitTest {
             </MapReduce>";
             parser = xml2.CreateParser("MapReduce");
             parser.AddContext("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
-            parser.AddContext("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            parser.AddContext("MapRuleOnT1Test", "MapReduce.Parser.UnitTest.MapRuleOnT1Test, MapReduce.Parser.UnitTest");
             parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
             parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
-            parser.AddResult("MapReduceOnT2", t2result);
+            parser.AddResult("MapReduceOnT2TestRef", t2result);
             Assert.IsTrue(parser.Build());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
-
-            Func<Test1, Test1> func = resultFunc.Compile();
-
-            var t1 = new Test1() { A = 10 };
-            Test1 result = func(t1);
-            Assert.AreEqual(10, result.Details.Count());
-            Assert.AreEqual(220, result.Result);
+            return resultFunc.Compile();
         }
+
     }
 }

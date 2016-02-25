@@ -21,7 +21,7 @@ namespace ClassLibrary1 {
 
     public class IninValueOnT3 : RuleBase<Test3> {
         public override Test3 Execute(Test3 entity) {
-            entity.Value = 3;
+            entity.Value = 1;
             return entity;
         }
     }

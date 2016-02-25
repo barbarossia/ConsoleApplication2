@@ -72,7 +72,7 @@ namespace MapReduce.Parser {
             Action(forEachResult);
         }
 
-        public bool Execute() {
+        public bool Build() {
             return MapReduceBlock();
         }
         private bool MapReduceBlock() {
@@ -107,22 +107,27 @@ namespace MapReduce.Parser {
         public bool MapBlock() {
             Token t;
             bool parseSuccess = false;
-            tokenBuffer.Backup();
+            Token save = tokenBuffer.Backup();
             t = tokenBuffer.Current;
             if (t != null && t.TokenType == TokenType.MAP) {
                 tokenBuffer.Consume();
                 parseSuccess = true;
-                OptionalRuleListParser();
-                parseSuccess = MapRuleListParser();
-                ForEachBlock();
-                if (parseSuccess) {
-                    t = tokenBuffer.Current;
-                    if (t != null && t.TokenType == TokenType.EOF) {
-                        tokenBuffer.Consume();
-                        tokenBuffer.Commit();
+                if(OptionalRuleListParser()) {
+                    if(MapRuleListParser()){
+                        if(OptionalForEachBlock()) {
+                            t = tokenBuffer.Current;
+                            if(t != null && t.TokenType == TokenType.EOF) {
+                                tokenBuffer.Consume();
+                                tokenBuffer.Commit();
+                            } else {
+                                parseSuccess = false;
+                                currentResult = new ParserResult(false
+                                    , new SyntaxException(save, "Map has encurred the error!"));
+                            }
+                        }
                     } else {
-                        parseSuccess = false;
-                        currentResult = new ParserResult(false, new SyntaxException("Map section should have end"));
+                        currentResult = new ParserResult(false
+                            , new SyntaxException(save, "Map has encurred the error!"));
                     }
                 }
             }
@@ -131,7 +136,7 @@ namespace MapReduce.Parser {
             }
             return parseSuccess;
         }
-        private bool ForEachBlock() {
+        private bool OptionalForEachBlock() {
             Token t;
             bool parseSuccess = false;
             tokenBuffer.Backup();
@@ -155,7 +160,7 @@ namespace MapReduce.Parser {
             if(!parseSuccess) {
                 tokenBuffer.Rollback();
             }
-            return parseSuccess;
+            return true;
         }
         private bool SelectionForEachListParser() {
             tokenBuffer.Backup();
@@ -202,13 +207,12 @@ namespace MapReduce.Parser {
             parseSuccess = MapRuleParser();
             if (parseSuccess) {
                 while (parseSuccess) {
-
                     parseSuccess = MapRuleParser();
                 }
                 parseSuccess = true;
             }
             if (!parseSuccess) {
-                currentResult = new ParserResult(false, new SyntaxException("Map section must contains one or more elements!"));
+                tokenBuffer.Rollback();
             }
             return parseSuccess;
         } 
@@ -228,7 +232,7 @@ namespace MapReduce.Parser {
         public bool ReduceBlock() {
             Token t;
             bool parseSuccess = false;
-            tokenBuffer.Backup();
+            Token save = tokenBuffer.Backup();
             t = tokenBuffer.Current;
             if (t != null && t.TokenType == TokenType.REDUCE) {
                 tokenBuffer.Consume();
@@ -240,13 +244,14 @@ namespace MapReduce.Parser {
                         tokenBuffer.Commit();
                     } else {
                         parseSuccess = false;
-                        currentResult = new ParserResult(false
-                            , new SyntaxException("Reduce section has not End!"));
                     }
                 }
             }
             if (!parseSuccess) {
                 tokenBuffer.Rollback();
+                currentResult = new ParserResult(false
+                    , new SyntaxException(save
+                    , "Reduce has encurred the error!"));
             }
             return parseSuccess;
         }
@@ -263,7 +268,6 @@ namespace MapReduce.Parser {
             }
             if(!parseSuccess) {
                 tokenBuffer.Rollback();
-                currentResult = new ParserResult(false, new SyntaxException("Reduce section must contains more than one element!"));
             }
             return parseSuccess;
         }

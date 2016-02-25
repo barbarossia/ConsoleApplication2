@@ -24,14 +24,15 @@ namespace MapReduce.Parser {
         public void Rollback() {
             index = snapshot.Pop();
         }
-        public void Backup() {
+        public Token Backup() {
             snapshot.Push(index);
+            return Current;
         }
         public void Commit() {
             snapshot.Pop();
         }
         public bool IsEnd() {
-            return false;
+            return index == items.Count;
         }
         public TokenBuffer(IEnumerable<Token> tokens) {
             items = new List<Token>(tokens);

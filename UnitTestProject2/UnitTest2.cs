@@ -10,6 +10,21 @@ namespace MapReduce.Parser.UnitTest {
     [TestClass]
     public class UnitTest2 {
         [TestMethod]
+        public void ForEachNoItems() {
+            string xml = @"
+                <Map>
+                    <MapRule Type = 'MapRuleOnT2' />
+                    <ForEach>
+                    </ForEach>
+                </Map>";
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            Assert.IsFalse(parser.MapBlock());
+            Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
+            Assert.AreEqual("Map has encurred the error!", parser.Result.Error.Message);
+        }
+
+        [TestMethod]
         public void ForEachOnlyRule() {
             string xml = @"
                 <Map>
@@ -93,7 +108,7 @@ namespace MapReduce.Parser.UnitTest {
             parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
             parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
 
-            Assert.IsTrue(parser.Execute());
+            Assert.IsTrue(parser.Build());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
 
@@ -180,7 +195,7 @@ namespace MapReduce.Parser.UnitTest {
             parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
             parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
 
-            Assert.IsTrue(parser.Execute());
+            Assert.IsTrue(parser.Build());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
 

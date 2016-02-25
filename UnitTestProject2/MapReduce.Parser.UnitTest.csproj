@@ -57,12 +57,16 @@
     <Compile Include="Common.cs" />
     <Compile Include="ConditionOnRuleTest1.cs" />
     <Compile Include="IninValueOnT2Add.cs" />
+    <Compile Include="MapRuleOnT1Test.cs" />
     <Compile Include="MapRuleOnT2Add.cs" />
+    <Compile Include="MapRuleOnT2Test.cs" />
+    <Compile Include="ProcessTiming.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnitTest2.cs" />
     <Compile Include="UnitTest3.cs" />
     <Compile Include="UnitTest4.cs" />
+    <Compile Include="UnitTest5.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ClassLibrary1\ClassLibrary1.csproj">

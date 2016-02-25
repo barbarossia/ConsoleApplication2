@@ -14,6 +14,8 @@ namespace MapReduce.Parser {
         public LambdaExpression Expression { get; set; }
         public TokenInfo Token { get; set; }
         public SyntaxException Error { get; set; }
+        private const string METHOD = "Execute";
+        private const string REFERNCENAME = "ref";
         public ParserResult(TokenInfo token, bool isSuccessed, LambdaExpression expr, SyntaxException error = null) {
             IsSuccessed = isSuccessed;
             Expression = expr;
@@ -26,11 +28,10 @@ namespace MapReduce.Parser {
         }
         public static ParserResult CreateRule(Token token, Context context) {
             XElement input = token.Value;
-            if (input.Attribute("ref") != null) {
-                var resultName = input.Attribute("ref").Value;
+            if (input.Attribute(REFERNCENAME) != null) {
+                var resultName = input.Attribute(REFERNCENAME).Value;
                 var result = context.Get<ParserResult>(resultName);
-                if(result == null) result = new ParserResult(false
-                    , new SyntaxException(string.Format("cannot find the refenerce: {0}", resultName)));
+                if(result == null) throw new SyntaxException(token, string.Format("cannot find the refenerce: {0}", resultName));
                 return result;
             }
             TokenInfo info = TokenInfo.Create(input, context);
@@ -42,8 +43,7 @@ namespace MapReduce.Parser {
                 } else if (token.TokenType == TokenType.REDUCERULE) {
                     return CreateReduceRule(info);
                 } else {
-                    return new ParserResult(false
-                    , new SyntaxException(string.Format("error on create parse result, cannot find the rule: {0}", info.Image)));
+                    throw new SyntaxException(token, string.Format("error on create parse result, cannot find the rule: {0}", info.Image));
                 }
             } else {
                 return null;
@@ -52,21 +52,21 @@ namespace MapReduce.Parser {
 
         private static ParserResult CreateRule(TokenInfo info) {
             Type theType = info.RuleType;
-            var method = theType.GetMethod("Execute");
+            var method = theType.GetMethod(METHOD);
             var invoker = (IInvoker)Utilities.CreateType(typeof(RuleInvoker<>), info.SourceType)
                 .CreateInstance();
             return new ParserResult(info, true, invoker.Invoke(theType));
         }
         private static ParserResult CreateMapRule(TokenInfo info) {
             Type theType = info.RuleType;
-            var method = theType.GetMethod("Execute");
+            var method = theType.GetMethod(METHOD);
             var invoker = (IInvoker)Utilities.CreateType(typeof(MapRuleInvoker<,>), info.SourceType, info.TargetType)
                .CreateInstance();
             return new ParserResult(info, true, invoker.Invoke(theType));
         }
         private static ParserResult CreateReduceRule(TokenInfo info) {
             Type theType = info.RuleType;
-            var method = theType.GetMethod("Execute");
+            var method = theType.GetMethod(METHOD);
             var invoker = (IInvoker)Utilities.CreateType(typeof(ReduceRuleInvoker<,>), info.SourceType, info.TargetType)
                            .CreateInstance();
             return new ParserResult(info, true, invoker.Invoke(theType));

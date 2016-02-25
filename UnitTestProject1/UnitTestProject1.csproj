@@ -64,8 +64,6 @@
     <Compile Include="UnitTest2.cs" />
     <Compile Include="UnitTest3.cs" />
     <Compile Include="UnitTest4.cs" />
-    <Compile Include="UnitTest5.cs" />
-    <Compile Include="UnitTest6.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ClassLibrary1\ClassLibrary1.csproj">
@@ -75,10 +73,6 @@
     <ProjectReference Include="..\ConsoleApplication3\ConsoleApplication3.csproj">
       <Project>{5aba226d-dec5-424a-8796-5a05370494d7}</Project>
       <Name>ConsoleApplication3</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ConsoleApplication5\ConsoleApplication5.csproj">
-      <Project>{af734655-12c7-4631-bfa0-ad9407f69fdf}</Project>
-      <Name>ConsoleApplication5</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

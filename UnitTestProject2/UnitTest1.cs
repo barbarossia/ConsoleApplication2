@@ -38,21 +38,23 @@ namespace MapReduce.Parser.UnitTest {
         [TestMethod]
         public void TestReduceNoItems() {
             string xml = @"
-                    <Reduce></Reduce>";
+                <Reduce></Reduce>";
             Parser parser = xml.CreateParser("Reduce");
             Assert.IsFalse(parser.ReduceBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
+            Assert.AreEqual("Reduce has encurred the error!", parser.Result.Error.Message);
+            Assert.AreEqual(xml.Trim(), parser.Result.Error.Source.Value.ToString());
         }
         [TestMethod]
         public void TestReduceWithNotExpected() {
-            string xml = @"
-                           <Reduce>
-        <Rule Type = 'IninValueOnT2' />
-           </Reduce>";
+            string xml = @"<Reduce>
+                <Rule Type = 'IninValueOnT2' />
+            </Reduce>";
             Parser parser = xml.CreateParser("Reduce");
             parser.AddContext("IninValueOnT2", "ClassLibrary1.IninValueOnT2, ClassLibrary1");
             Assert.IsFalse(parser.ReduceBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
+            Assert.AreEqual("Reduce has encurred the error!", parser.Result.Error.Message);
         }
 
         [TestMethod]
@@ -66,6 +68,7 @@ namespace MapReduce.Parser.UnitTest {
 
             Assert.IsFalse(parser.MapBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
+            Assert.AreEqual("Map has encurred the error!", parser.Result.Error.Message);
         }
 
         [TestMethod]
@@ -80,6 +83,7 @@ namespace MapReduce.Parser.UnitTest {
             parser.AddContext("IninValueOnT2Add", "UnitTestProject2.IninValueOnT2Add, UnitTestProject2");
             Assert.IsFalse(parser.MapBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
+            Assert.AreEqual("Map has encurred the error!", parser.Result.Error.Message);
         }
 
         [TestMethod]
@@ -158,6 +162,7 @@ namespace MapReduce.Parser.UnitTest {
 
             Assert.IsFalse(parser.MapBlock());
             Assert.IsInstanceOfType(parser.Result.Error, typeof(SyntaxException));
+            Assert.AreEqual("Map has encurred the error!", parser.Result.Error.Message);
             ;
         }
         [TestMethod]
@@ -177,7 +182,7 @@ namespace MapReduce.Parser.UnitTest {
             parser.AddContext("ReduceRuleOnT1", "ClassLibrary1.ReduceRuleOnT1, ClassLibrary1");
             parser.AddContext("AssignRuleOnT1", "ClassLibrary1.AssignRuleOnT1, ClassLibrary1");
 
-            Assert.IsTrue(parser.Execute());
+            Assert.IsTrue(parser.Build());
             var parserResult = parser.Result.Expression;
             var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
 
