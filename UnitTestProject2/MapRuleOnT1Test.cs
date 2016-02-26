@@ -7,8 +7,7 @@ namespace MapReduce.Parser.UnitTest {
     public class MapRuleOnT1Test : IMapRule<Test1, Test2> {
         public IEnumerable<Test2> Execute(Test1 t2) {
             return Enumerable.Range(1, 100)
-                .Select(t => new Test2() { B = t })
-                .ToList();
+                .Select(t => new Test2() { B = t });
         }
         public RuleKind RuleKind
         {

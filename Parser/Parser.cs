@@ -1,5 +1,6 @@
 ﻿using ClassLibrary1;
 using MapReduce.Lexer;
+using MapReduce.Parser.Invokers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,7 +64,7 @@ namespace MapReduce.Parser {
                 var mm = gTarget.MakeGenericType(target);
                 target = mm;
             }
-            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(ForEachInvoker<,>), source, target)
+            var invoker = (IInvoker)Utilities.CreateType(typeof(ForEachBlockInvoker<,>), source, target)
                            .CreateInstance(tmpResult.Expression);
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.ForEach, source, target);

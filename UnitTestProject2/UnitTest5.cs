@@ -11,20 +11,21 @@ namespace MapReduce.Parser.UnitTest {
         [TestMethod]
         public void PerfermentTest() {
             DateTime processingBeginDateTime = DateTime.UtcNow;
-            var list = Enumerable.Range(1, 100)
-               .Select(t => new Test1() { A = t })
-               .ToList();
+            var list = Enumerable.Range(1, 10000)
+               .Select(t => new Test1() { A = t });
 
             Func<Test1, Test1> func = Build();
             doTests(list, func);
             DateTime processingEndDateTime = DateTime.UtcNow;
-            var processingSeconds = (double)ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
+            double processingSeconds = ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
             Console.WriteLine(processingSeconds);
 
         }
-        private void doTests(List<Test1> list, Func<Test1, Test1> func) {
+        private void doTests(IEnumerable<Test1> list, Func<Test1, Test1> func) {
             foreach(var t1 in list) {
-                func(t1);
+                var result = func(t1);
+                Assert.AreEqual(100, result.Details.Count());
+                Assert.AreEqual(505000, result.Result);
             }
         }
         private Func<Test1, Test1> Build() {

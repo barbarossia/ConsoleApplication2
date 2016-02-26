@@ -1,5 +1,6 @@
 ﻿using ClassLibrary1;
 using MapReduce.Lexer;
+using MapReduce.Parser.Invokers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,22 +55,22 @@ namespace MapReduce.Parser {
             Type theType = info.RuleType;
             var method = theType.GetMethod(METHOD);
             var invoker = (IInvoker)Utilities.CreateType(typeof(RuleInvoker<>), info.SourceType)
-                .CreateInstance();
-            return new ParserResult(info, true, invoker.Invoke(theType));
+                .CreateInstance(theType);
+            return new ParserResult(info, true, invoker.Invoke());
         }
         private static ParserResult CreateMapRule(TokenInfo info) {
             Type theType = info.RuleType;
             var method = theType.GetMethod(METHOD);
             var invoker = (IInvoker)Utilities.CreateType(typeof(MapRuleInvoker<,>), info.SourceType, info.TargetType)
-               .CreateInstance();
-            return new ParserResult(info, true, invoker.Invoke(theType));
+               .CreateInstance(theType);
+            return new ParserResult(info, true, invoker.Invoke());
         }
         private static ParserResult CreateReduceRule(TokenInfo info) {
             Type theType = info.RuleType;
             var method = theType.GetMethod(METHOD);
             var invoker = (IInvoker)Utilities.CreateType(typeof(ReduceRuleInvoker<,>), info.SourceType, info.TargetType)
-                           .CreateInstance();
-            return new ParserResult(info, true, invoker.Invoke(theType));
+                           .CreateInstance(theType);
+            return new ParserResult(info, true, invoker.Invoke());
         }
     }
 }

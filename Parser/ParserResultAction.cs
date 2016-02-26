@@ -1,4 +1,5 @@
 ﻿using ClassLibrary1;
+using MapReduce.Parser.Invokers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +46,7 @@ namespace MapReduce.Parser {
             Type source = Token.SourceType;
             Type mid = Token.TargetType;
             Type target = other.Token.TargetType;
-            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(ForEachGroupInvoker<,,>), source, mid, target)
+            var invoker = (IInvoker)Utilities.CreateType(typeof(MapForEachGroupInvoker<,,>), source, mid, target)
                            .CreateInstance(Expression, other.Expression);
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.MapRule, source, target);
@@ -54,7 +55,7 @@ namespace MapReduce.Parser {
         private ParserResult MapReduceAction(ParserResult other) {
             Type source = Token.SourceType;
             Type target = other.Token.SourceType;
-            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(MapReduceInvoker<,>), source, target)
+            var invoker = (IInvoker)Utilities.CreateType(typeof(MapReduceInvoker<,>), source, target)
                            .CreateInstance(Expression, other.Expression);
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.Rule, source, source);
@@ -62,7 +63,7 @@ namespace MapReduce.Parser {
         }
         private ParserResult RuleAction(ParserResult other) {
             Type source = Token.SourceType;
-            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(RuleGroupInvoker<>), source)
+            var invoker = (IInvoker)Utilities.CreateType(typeof(RuleGroupInvoker<>), source)
                            .CreateInstance(Expression, other.Expression);
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.Rule, source, source);
@@ -72,7 +73,7 @@ namespace MapReduce.Parser {
         private ParserResult ReduceAction(ParserResult other) {
             Type source = Token.SourceType;
             Type target = other.Token.TargetType;
-            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(ReduceInvoker<,>), source, target)
+            var invoker = (IInvoker)Utilities.CreateType(typeof(ReduceBlockInvoker<,>), source, target)
                            .CreateInstance(Expression, other.Expression);
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.ReduceRule, source, target);
@@ -82,7 +83,7 @@ namespace MapReduce.Parser {
         private ParserResult MapRuleAction(ParserResult other) {
             Type source = Token.SourceType;
             Type target = other.Token.TargetType;
-            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(MapGroupInvoker<,>), source, target)
+            var invoker = (IInvoker)Utilities.CreateType(typeof(MapGroupInvoker<,>), source, target)
                            .CreateInstance(Expression, other.Expression);
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.MapRule, source, target);
@@ -92,7 +93,7 @@ namespace MapReduce.Parser {
         private ParserResult RuleMapAction(ParserResult other) {
             Type source = Token.SourceType;
             Type target = other.Token.TargetType;
-            var invoker = (IGroupInvoker)Utilities.CreateType(typeof(InitMapInvoker<,>), source, target)
+            var invoker = (IInvoker)Utilities.CreateType(typeof(RuleAndMapInvoker<,>), source, target)
                            .CreateInstance(Expression, other.Expression);
             var expr = invoker.Invoke();
             var token = new TokenInfo(RegisterKeys.MapRule, source, target);
