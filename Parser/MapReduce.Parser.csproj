@@ -61,6 +61,10 @@
     <Compile Include="Invokers\RuleGroupInvoker.cs" />
     <Compile Include="Invokers\RuleInvoker.cs" />
     <Compile Include="Invokers\RuleInvokerBase.cs" />
+    <Compile Include="RuleConfigurationException.cs" />
+    <Compile Include="RuleEngineExtenstion.cs" />
+    <Compile Include="RulesEngine.cs" />
+    <Compile Include="RulesEngineConfigurationXmlProvider.cs" />
     <Compile Include="SyntaxException.cs" />
     <Compile Include="TokenInfo.cs" />
     <Compile Include="TokenBuffer.cs" />

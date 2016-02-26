@@ -8,6 +8,8 @@ namespace MapReduce.Parser {
     public class Context {
         private Dictionary<string, object> items = new Dictionary<string, object>();
         public TokenBuffer TokenBuffer { get; set; }
+        public Context() {
+        }
         public Context(TokenBuffer buffer) {
             TokenBuffer = buffer;
         }
