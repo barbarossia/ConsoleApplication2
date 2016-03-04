@@ -115,7 +115,7 @@ namespace MapReduce.Parser.UnitTest {
                 </Map>";
             Parser parser = xml.CreateParser("Map");
             parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
-            parser.AddContext("MapRuleOnT2Add", "UnitTestProject2.MapRuleOnT2Add, UnitTestProject2");
+            parser.AddContext("MapRuleOnT2Add", "MapReduce.Parser.UnitTest.MapRuleOnT2Add, MapReduce.Parser.UnitTest");
 
             Assert.IsTrue(parser.MapBlock());
             var parserResult = parser.Result.Expression;
@@ -126,6 +126,48 @@ namespace MapReduce.Parser.UnitTest {
             var t2 = new Test2() { B = 10 };
             IEnumerable<Test3> result = func(t2);
             Assert.AreEqual(13, result.Count());
+        }
+
+        [TestMethod]
+        public void TestMapWithCons() {
+            string xml = @"
+                <Map>
+                    <MapRule Type = 'MapRuleOnT2WithCons' />
+                </Map>";
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("MapRuleOnT2WithCons", "MapReduce.Parser.UnitTest.MapRuleOnT2WithCons, MapReduce.Parser.UnitTest");
+
+            Assert.IsTrue(parser.MapBlock());
+            var parserResult = parser.Result.Expression;
+            var resultFunc = (Expression<Func<Test2, IEnumerable<Test3>>>)parserResult;
+
+            Func<Test2, IEnumerable<Test3>> func = resultFunc.Compile();
+
+            var t2 = new Test2() { B = 10 };
+            IEnumerable<Test3> result = func(t2);
+            Assert.AreEqual(13, result.Count());
+        }
+
+        [TestMethod]
+        public void TestMapGroupWithInherit() {
+            string xml = @"
+                <Map>
+                    <MapRule Type = 'MapRuleOnT2Add' />
+                    <MapRule Type = 'MapRuleOnT2AddInherit' />
+                </Map>";
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("MapRuleOnT2Add", "MapReduce.Parser.UnitTest.MapRuleOnT2Add, MapReduce.Parser.UnitTest");
+            parser.AddContext("MapRuleOnT2AddInherit", "MapReduce.Parser.UnitTest.MapRuleOnT2AddInherit, MapReduce.Parser.UnitTest");
+
+            Assert.IsTrue(parser.MapBlock());
+            var parserResult = parser.Result.Expression;
+            var resultFunc = (Expression<Func<Test2, IEnumerable<Test3>>>)parserResult;
+
+            Func<Test2, IEnumerable<Test3>> func = resultFunc.Compile();
+
+            var t2 = new Test2() { B = 10 };
+            IEnumerable<Test3> result = func(t2);
+            Assert.AreEqual(9, result.Count());
         }
 
         [TestMethod]

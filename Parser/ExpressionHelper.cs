@@ -47,10 +47,35 @@ namespace MapReduce.Parser {
         }
 
         public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TResult>(this Expression<Func<T, IEnumerable<TResult>>> mapLeftExpr, Expression<Func<T, IEnumerable<TResult>>> mapRightExpr) {
+            //var input = mapLeftExpr.Parameters[0];
+            //var mapLeftFunc = mapLeftExpr.Compile();
+            //var MaprightFunc = mapRightExpr.Compile();
+            //Expression<Func<T, IEnumerable<TResult>>> block = (l) => mapLeftFunc(l).Concat(MaprightFunc(l));
             var input = mapLeftExpr.Parameters[0];
-            var mapLeftFunc = mapLeftExpr.Compile();
-            var MaprightFunc = mapRightExpr.Compile();
-            Expression<Func<T, IEnumerable<TResult>>> block = (l) => mapLeftFunc(l).Concat(MaprightFunc(l));
+            LabelTarget labelTarget = Expression.Label(typeof(IEnumerable<TResult>));
+            var loc = Expression.Variable(typeof(IEnumerable<TResult>));
+            List<TResult> list = new List<TResult>();
+            var para1 = Expression.Parameter(typeof(T));
+            var asn = Expression.Assign(para1, input);
+            Expression<Action<IEnumerable<TResult>>> expr = (l) => list.AddRange(l);
+            var r2 = Expression.Invoke(expr, Expression.Invoke(mapLeftExpr, asn));
+            var r4 = Expression.Invoke(expr, Expression.Invoke(mapRightExpr, asn));
+            Expression<Func<IEnumerable<TResult>>> assing1 = () => list;
+            var i = Expression.Invoke(assing1);
+            var asn1 = Expression.Assign(loc, i);
+            GotoExpression ret = Expression.Return(labelTarget, asn1);
+            LabelExpression lbl = Expression.Label(labelTarget, Expression.Constant(new List<TResult>()));
+            BlockExpression block = Expression.Block(
+                new ParameterExpression[] { loc, para1 },
+                asn,
+                r2,
+                r4,
+                assing1,
+                i,
+                asn1,
+                ret,
+                lbl
+                );
             return Expression.Lambda<Func<T, IEnumerable<TResult>>>(block, input);
         }
 

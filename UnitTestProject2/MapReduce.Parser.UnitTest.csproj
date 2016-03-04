@@ -64,6 +64,7 @@
     <Compile Include="MapRuleOnT1Test.cs" />
     <Compile Include="MapRuleOnT2Add.cs" />
     <Compile Include="MapRuleOnT2Test.cs" />
+    <Compile Include="MapRuleOnT2WithCons.cs" />
     <Compile Include="ProcessTiming.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

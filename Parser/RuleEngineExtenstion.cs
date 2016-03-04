@@ -9,7 +9,7 @@ namespace MapReduce.Parser {
     public static class RuleEngineExtenstion {
         public static Parser CreateParser(this XElement block, Context ctx) {
             var lexer = new MapReduce.Lexer.Lexer(block);
-            var results = lexer.Lex().ToList();
+            var results = lexer.Lex();
             TokenBuffer buffer = new TokenBuffer(results);
             ctx.TokenBuffer = buffer;
             Parser parser = new Parser(ctx);
