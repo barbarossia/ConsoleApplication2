@@ -12,6 +12,7 @@ namespace MapReduce.Parser.UnitTest {
             count = i;
         }
         public IEnumerable<Test3> Execute(Test2 t2) {
+            Console.WriteLine("Call me, MapRuleOnT2WithCons");
             return Enumerable.Range(1, 3)
                 .Select(t => new Test3() { C = t })
                 .ToList();

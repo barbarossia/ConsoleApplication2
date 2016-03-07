@@ -42,9 +42,9 @@ namespace MapReduce.Parser.UnitTest {
 
             Func<Test2, IEnumerable<Test3>> func = resultFunc.Compile();
 
-            var t2 = new Test2() { B = 10 };
+            var t2 = new Test2() { B = 2 };
             IEnumerable<Test3> result = func(t2);
-            Assert.AreEqual(10, result.Count());
+            Assert.AreEqual(2, result.Count());
         }
 
         [TestMethod]
@@ -68,11 +68,11 @@ namespace MapReduce.Parser.UnitTest {
 
             Func<Test1, IEnumerable<IEnumerable<Test3>>> func = resultFunc.Compile();
 
-            var t1 = new Test1() { A = 10 };
+            var t1 = new Test1() { A = 2 };
             IEnumerable<IEnumerable<Test3>> result1 = func(t1);
             IEnumerable<Test3> result2 = result1.SelectMany(r => r.Select(l=>l));
-            Assert.AreEqual(10, result1.Count());
-            Assert.AreEqual(55, result2.Count());
+            Assert.AreEqual(2, result1.Count());
+            Assert.AreEqual(3, result2.Count());
         }
 
         [TestMethod]
@@ -114,9 +114,9 @@ namespace MapReduce.Parser.UnitTest {
 
             Func<Test1, Test1> func = resultFunc.Compile();
 
-            var t1 = new Test1() { A = 10 };
+            var t1 = new Test1() { A = 2 };
             Test1 result = func(t1);
-            Assert.AreEqual(10, result.Details.Count());
+            Assert.AreEqual(2, result.Details.Count());
         }
         [TestMethod]
         public void ForEachMapReduce() {

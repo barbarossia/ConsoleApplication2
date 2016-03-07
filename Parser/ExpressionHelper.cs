@@ -45,7 +45,14 @@ namespace MapReduce.Parser {
                 );
             return Expression.Lambda<Func<T, T>>(block, input);
         }
-
+        /// <summary>
+        /// concat map and map
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="mapLeftExpr"></param>
+        /// <param name="mapRightExpr"></param>
+        /// <returns></returns>
         public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TResult>(this Expression<Func<T, IEnumerable<TResult>>> mapLeftExpr, Expression<Func<T, IEnumerable<TResult>>> mapRightExpr) {
             //var input = mapLeftExpr.Parameters[0];
             //var mapLeftFunc = mapLeftExpr.Compile();
@@ -78,14 +85,28 @@ namespace MapReduce.Parser {
                 );
             return Expression.Lambda<Func<T, IEnumerable<TResult>>>(block, input);
         }
-
+        /// <summary>
+        /// concat rule and map
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="expr1"></param>
+        /// <param name="expr2"></param>
+        /// <returns></returns>
         public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TResult>(this Expression<Func<T, T>> expr1, Expression<Func<T, IEnumerable<TResult>>> expr2) {
             var input = expr1.Parameters[0];
             var invoker = Expression.Invoke(expr2, Expression.Invoke(expr1, input));
 
             return Expression.Lambda<Func<T, IEnumerable<TResult>>>(invoker, input);
         }
-
+        /// <summary>
+        /// concat map and reduce
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="map"></param>
+        /// <param name="reduce"></param>
+        /// <returns></returns>
         public static Expression<Func<T, T>> Concat<T, TResult>(this Expression<Func<T, IEnumerable<TResult>>> map, Expression<Func<IEnumerable<TResult>, T, T>> reduce) {
             var input = map.Parameters[0];
             var invoker = Expression.Invoke(reduce, Expression.Invoke(map, input), input);
@@ -98,11 +119,48 @@ namespace MapReduce.Parser {
             Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> expr1 = (list) => list.Select(l => func(l));
             return expr1;
         }
+        /// <summary>
+        /// concat map and foreach
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TMid"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="map"></param>
+        /// <param name="forach"></param>
+        /// <returns></returns>
+        public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TMid, TResult>(this Expression<Func<T, IEnumerable<TMid>>> map, Expression<Func<IEnumerable<TMid>, IEnumerable<TResult>>> forach) {
+            var input = map.Parameters[0];
+            LabelTarget labelTarget = Expression.Label(typeof(IEnumerable<TResult>));
+            var loc = Expression.Variable(typeof(IEnumerable<TResult>));
+            var para1 = Expression.Parameter(typeof(T));
+            var asn = Expression.Assign(para1, input);
+            List<TMid> list = new List<TMid>();
+            List<TResult> list2 = new List<TResult>();
 
-        public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TMid, TResult>(this Expression<Func<T, IEnumerable<TMid>>> expr1, Expression<Func<IEnumerable<TMid>, IEnumerable<TResult>>> expr2) {
-            var input = expr1.Parameters[0];
-            var invoker = Expression.Invoke(expr2, Expression.Invoke(expr1, input));
-            return Expression.Lambda<Func<T, IEnumerable<TResult>>>(invoker, input);
+            Expression<Action<IEnumerable<TMid>>> expr = (l) => list.AddRange(l);
+            Expression<Action<IEnumerable<TResult>>> expr2 = (l2) => list2.AddRange(l2);
+            Expression<Func<IEnumerable<TMid>>> ass1 = () => list;
+            var r2 = Expression.Invoke(expr, Expression.Invoke(map, asn));
+            var r3 = Expression.Invoke(expr2, Expression.Invoke(forach, Expression.Invoke(ass1)));
+
+            Expression<Func<IEnumerable<TResult>>> assing1 = () => list2;
+            var i = Expression.Invoke(assing1);
+            var asn1 = Expression.Assign(loc, i);
+            GotoExpression ret = Expression.Return(labelTarget, asn1);
+            LabelExpression lbl = Expression.Label(labelTarget, Expression.Constant(new List<TResult>()));
+            BlockExpression block = Expression.Block(
+                new ParameterExpression[] { loc, para1 },
+                asn,
+                ass1,
+                r2,
+                r3,
+                assing1,
+                i,
+                asn1,
+                ret,
+                lbl
+                );
+            return Expression.Lambda<Func<T, IEnumerable<TResult>>>(block, input);
         }
     }
 }
