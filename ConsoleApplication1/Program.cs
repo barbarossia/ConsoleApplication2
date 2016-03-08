@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace ConsoleApplication1 {
     class Program {
         static void Main(string[] args) {
-            Test4();
+            Test5();
 
         }
 
@@ -60,6 +60,20 @@ namespace ConsoleApplication1 {
             var expr = selector.Enumerate();
             var func = expr.Compile();
             var result = func(listT2);
+        }
+
+        static void Test5() {
+            IMapRule<Test1, Test2> mapRule = new MapRuleOnT1IfTrue();
+            Expression<Func<Test1, IEnumerable<Test2>>> map = (t1) => mapRule.Execute(t1);
+            IRule<Test2> rule = new IninValueOnT2();
+            Expression<Func<Test2, Test2>> selector = (t2) => rule.Execute(t2);
+            Func<Test2, Test2> selector1 = (t2) => rule.Execute(t2);
+            List<Test2> listT2 = new List<Test2>() { new Test2() { B = 2, Result = 1 }, new Test2() { B = 3, Result = 1 } };
+            var for1 = selector.Enumerate();
+            var mapfor = map.Concat(for1);
+            var func = mapfor.Compile();
+            Test1 t = new Test1() { A = 10 };
+            var result = func(t);
         }
 
         class MapRuleOnT2Extra : IMapRule<Test2, Test3> {

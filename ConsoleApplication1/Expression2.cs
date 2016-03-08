@@ -67,6 +67,42 @@ namespace ConsoleApplication1 {
             Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> expr1 = (list2) => list2.Select(l=> func(l));
             return expr1;
         }
+
+        public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TMid, TResult>(this Expression<Func<T, IEnumerable<TMid>>> map, Expression<Func<IEnumerable<TMid>, IEnumerable<TResult>>> forach) {
+            var input = map.Parameters[0];
+            LabelTarget labelTarget = Expression.Label(typeof(IEnumerable<TResult>));
+            var loc = Expression.Variable(typeof(IEnumerable<TResult>));
+            var para1 = Expression.Parameter(typeof(T));
+            var asn = Expression.Assign(para1, input);
+            var list = Expression.Variable(typeof(List<TMid>));
+            var list2 = Expression.Variable(typeof(List<TResult>));
+
+            var ctor = typeof(List<TMid>).GetConstructor(new Type[] { typeof(IEnumerable<TMid>) });
+            var ctor2 = typeof(List<TResult>).GetConstructor(new Type[] { typeof(IEnumerable<TResult>) });
+            var r2 = Expression.New(ctor, Expression.Invoke(map, asn));
+            var ass = Expression.Assign(list, r2);
+            var r3 = Expression.New(ctor2, Expression.Invoke(forach, list));
+            var i = Expression.Assign(list2, r3);
+            var asn1 = Expression.Assign(loc, i);
+
+
+            GotoExpression ret = Expression.Return(labelTarget, asn1);
+            LabelExpression lbl = Expression.Label(labelTarget, Expression.Constant(new List<TResult>()));
+            BlockExpression block = Expression.Block(
+                new ParameterExpression[] { loc, para1, list, list2 },
+                asn,
+                list,
+                list2,
+                r2,
+                ass,
+                r3,
+                i,
+                asn1,
+                ret,
+                lbl
+                );
+            return Expression.Lambda<Func<T, IEnumerable<TResult>>>(block, input);
+        }
     }
 
 }

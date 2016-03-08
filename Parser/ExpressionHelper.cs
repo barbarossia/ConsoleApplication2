@@ -134,27 +134,24 @@ namespace MapReduce.Parser {
             var loc = Expression.Variable(typeof(IEnumerable<TResult>));
             var para1 = Expression.Parameter(typeof(T));
             var asn = Expression.Assign(para1, input);
-            List<TMid> list = new List<TMid>();
-            List<TResult> list2 = new List<TResult>();
+            var list = Expression.Variable(typeof(List<TMid>));
+            var list2 = Expression.Variable(typeof(List<TResult>));
 
-            Expression<Action<IEnumerable<TMid>>> expr = (l) => list.AddRange(l);
-            Expression<Action<IEnumerable<TResult>>> expr2 = (l2) => list2.AddRange(l2);
-            Expression<Func<IEnumerable<TMid>>> ass1 = () => list;
-            var r2 = Expression.Invoke(expr, Expression.Invoke(map, asn));
-            var r3 = Expression.Invoke(expr2, Expression.Invoke(forach, Expression.Invoke(ass1)));
-
-            Expression<Func<IEnumerable<TResult>>> assing1 = () => list2;
-            var i = Expression.Invoke(assing1);
+            var ctor = typeof(List<TMid>).GetConstructor(new Type[] { typeof(IEnumerable<TMid>) });
+            var ctor2 = typeof(List<TResult>).GetConstructor(new Type[] { typeof(IEnumerable<TResult>) });
+            var ass = Expression.Assign(list, Expression.New(ctor, Expression.Invoke(map, asn)));
+            var i = Expression.Assign(list2, Expression.New(ctor2, Expression.Invoke(forach, list)));
             var asn1 = Expression.Assign(loc, i);
+
+
             GotoExpression ret = Expression.Return(labelTarget, asn1);
             LabelExpression lbl = Expression.Label(labelTarget, Expression.Constant(new List<TResult>()));
             BlockExpression block = Expression.Block(
-                new ParameterExpression[] { loc, para1 },
+                new ParameterExpression[] { loc, para1, list, list2 },
                 asn,
-                ass1,
-                r2,
-                r3,
-                assing1,
+                list,
+                list2,
+                ass,
                 i,
                 asn1,
                 ret,
