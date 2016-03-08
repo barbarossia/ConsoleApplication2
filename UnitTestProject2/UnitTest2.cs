@@ -157,6 +157,46 @@ namespace MapReduce.Parser.UnitTest {
         }
 
         [TestMethod]
+        public void ForEachMapGroupReduce() {
+            string xml = @"
+                <Map>
+                    <Rule Type = 'IninValueOnT1' />
+                    <MapRule Type = 'MapRuleOnT1IfTrue' />
+                    <ForEach>
+                        <MapReduce>
+                            <Map>
+                                <MapRule Type = 'MapRuleOnT2Test' />
+                                <MapRule Type = 'MapRuleOnT2Add' />
+                            </Map>
+                            <Reduce>
+                                <ReduceRule Type = 'ReduceRuleOnT2' />
+                                <ReduceRule Type = 'AssignRuleOnT2' />
+                            </Reduce>
+                        </MapReduce>
+                    </ForEach>
+                </Map>";
+            Parser parser = xml.CreateParser("Map");
+            parser.AddContext("IninValueOnT1", "ClassLibrary1.IninValueOnT1, ClassLibrary1");
+            parser.AddContext("MapRuleOnT1IfTrue", "ClassLibrary1.MapRuleOnT1IfTrue, ClassLibrary1");
+            parser.AddContext("MapRuleOnT2Test", "MapReduce.Parser.UnitTest.MapRuleOnT2Test, MapReduce.Parser.UnitTest");
+            parser.AddContext("MapRuleOnT2Add", "MapReduce.Parser.UnitTest.MapRuleOnT2Add, MapReduce.Parser.UnitTest");
+            parser.AddContext("ReduceRuleOnT2", "ClassLibrary1.ReduceRuleOnT2, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT2", "ClassLibrary1.AssignRuleOnT2, ClassLibrary1");
+
+            Assert.IsTrue(parser.MapBlock());
+            var parserResult = parser.Result.Expression;
+            var resultFunc = (Expression<Func<Test1, IEnumerable<Test2>>>)parserResult;
+
+            Func<Test1, IEnumerable<Test2>> func = resultFunc.Compile();
+
+            var t1 = new Test1() { A = 10 };
+            List<Test2> result = func(t1).ToList();
+            Assert.AreEqual(10, result.Count);
+            Assert.AreEqual(103, result[9].Details.Count());
+            Assert.AreEqual(103, result[0].Details.Count());
+        }
+
+        [TestMethod]
         public void NestedForEachMapReduce() {
             string xml = @"
             <MapReduce>

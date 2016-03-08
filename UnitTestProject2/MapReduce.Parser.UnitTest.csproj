@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="Common.cs" />
     <Compile Include="ConditionOnRuleTest1.cs" />
+    <Compile Include="Context.cs" />
     <Compile Include="IninValueOnT2Add.cs" />
     <Compile Include="MapRuleOnT1Test.cs" />
     <Compile Include="MapRuleOnT2Add.cs" />
@@ -79,6 +80,10 @@
       <Project>{6f6b3b25-ec78-42e2-aa0d-67d51e86b4f5}</Project>
       <Name>ClassLibrary1</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MapReduce.Cache\MapReduce.Cache.csproj">
+      <Project>{0c40b0e9-3259-4165-8731-07fe0b1ff5d3}</Project>
+      <Name>MapReduce.Cache</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MapReduce.Lexer\MapReduce.Lexer.csproj">
       <Project>{b0b0c7bd-b6fe-4a39-9bb2-c66d9303f94b}</Project>
       <Name>MapReduce.Lexer</Name>
@@ -93,6 +98,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="TestRule2.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="TestRule3.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

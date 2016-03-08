@@ -17,7 +17,7 @@ namespace MapReduce.Parser.UnitTest {
             var lexer = new MapReduce.Lexer.Lexer(source);
             var results = lexer.Lex().ToList();
             TokenBuffer buffer = new TokenBuffer(results);
-            Context ctx = new Context(buffer);
+            MapReduce.Parser.Context ctx = new MapReduce.Parser.Context(buffer);
 
             Parser parser = new Parser(ctx);
             return parser;

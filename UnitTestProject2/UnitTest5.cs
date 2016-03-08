@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using ClassLibrary1;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MapReduce.Parser.UnitTest {
     [TestClass]
@@ -15,18 +16,39 @@ namespace MapReduce.Parser.UnitTest {
                .Select(t => new Test1() { A = t });
 
             Func<Test1, Test1> func = Build();
-            doTests(list, func);
+            foreach(var t in list) {
+                doTest(t, func);
+            }
+            DateTime processingEndDateTime = DateTime.UtcNow;
+            double processingSeconds = ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
+            Console.WriteLine(processingSeconds);
+        }
+        [TestMethod]
+        public void Multi_Thread_PerfermentTest() {
+            DateTime processingBeginDateTime = DateTime.UtcNow;
+            var list = Enumerable.Range(1, 10000)
+               .Select(t => new Test1() { A = t }).ToArray();
+
+            Func<Test1, Test1> func = Build();
+            var taskList = new List<Task>();
+            for(int i = 0; i < 10000; i++) {
+                int temp = i;
+                taskList.Add(Task.Factory.StartNew(() => {
+                    doTest(list[temp], func);
+                }));
+            }
+            Task.WaitAll(taskList.ToArray());
+
             DateTime processingEndDateTime = DateTime.UtcNow;
             double processingSeconds = ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
             Console.WriteLine(processingSeconds);
 
         }
-        private void doTests(IEnumerable<Test1> list, Func<Test1, Test1> func) {
-            foreach(var t1 in list) {
-                var result = func(t1);
-                Assert.AreEqual(100, result.Details.Count());
-                Assert.AreEqual(505000, result.Result);
-            }
+
+        private void doTest(Test1 t1, Func<Test1, Test1> func) {
+            var result = func(t1);
+            Assert.AreEqual(100, result.Details.Count());
+            Assert.AreEqual(505000, result.Result);
         }
         private Func<Test1, Test1> Build() {
             string xml1 = @"<MapReduce>

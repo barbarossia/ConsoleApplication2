@@ -10,8 +10,7 @@ namespace MapReduce.Parser.UnitTest {
         public virtual IEnumerable<Test3> Execute(Test2 t2) {
             Console.WriteLine("Call me, IninValueOnT2Add");
             return Enumerable.Range(1, 3)
-                .Select(t => new Test3() { C = t })
-                .ToList();
+                .Select(t => new Test3() { C = t });
         }
         public RuleKind RuleKind
         {
@@ -26,8 +25,7 @@ namespace MapReduce.Parser.UnitTest {
         public override IEnumerable<Test3> Execute(Test2 t2) {
             Console.WriteLine("Call me, MapRuleOnT2AddInherit");
             return Enumerable.Range(4, 6)
-                .Select(t => new Test3() { C = t })
-                .ToList();
+                .Select(t => new Test3() { C = t });
         }
 
     }
