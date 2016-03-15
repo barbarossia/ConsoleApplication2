@@ -109,9 +109,9 @@ namespace MapReduce.Parser {
         }
 
         public static Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> Enumerate<T, TResult>(this Expression<Func<T, TResult>> expr) {
-            var func = expr.Compile();
-            Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> expr1 = (list) => list.Select(l => func(l));
-            return expr1;
+            var list = Expression.Parameter(typeof(IEnumerable<T>));
+            var res = Expression.Call(typeof(Enumerable), "Select", new Type[] { typeof(T), typeof(TResult) }, list, expr);
+            return Expression.Lambda<Func<IEnumerable<T>, IEnumerable<TResult>>>(res, list);
         }
         /// <summary>
         /// concat map and foreach
@@ -135,22 +135,12 @@ namespace MapReduce.Parser {
             var ctor2 = typeof(List<TResult>).GetConstructor(new Type[] { typeof(IEnumerable<TResult>) });
             var ass = Expression.Assign(list, Expression.New(ctor, Expression.Invoke(map, asn)));
             var i = Expression.Assign(list2, Expression.New(ctor2, Expression.Invoke(forach, list)));
-            var asn1 = Expression.Assign(loc, i);
 
-
-            GotoExpression ret = Expression.Return(labelTarget, asn1);
-            LabelExpression lbl = Expression.Label(labelTarget, Expression.Constant(new List<TResult>()));
             BlockExpression block = Expression.Block(
                 new ParameterExpression[] { loc, para1, list, list2 },
                 asn,
-                list,
-                list2,
                 ass,
-                i,
-                asn1,
-                ret,
-                lbl
-                );
+                i);
             return Expression.Lambda<Func<T, IEnumerable<TResult>>>(block, input);
         }
     }

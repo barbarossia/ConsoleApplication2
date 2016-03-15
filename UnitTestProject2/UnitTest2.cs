@@ -70,7 +70,7 @@ namespace MapReduce.Parser.UnitTest {
 
             var t1 = new Test1() { A = 2 };
             IEnumerable<IEnumerable<Test3>> result1 = func(t1);
-            IEnumerable<Test3> result2 = result1.SelectMany(r => r.Select(l=>l));
+            IEnumerable<Test3> result2 = result1.SelectMany(r => r.Select(l => l));
             Assert.AreEqual(2, result1.Count());
             Assert.AreEqual(3, result2.Count());
         }

@@ -14,6 +14,7 @@ namespace MapReduce.Parser {
             _xDoc = XDocument.Load(configKey);
         }
         public RulesEngine GetRulesEngine() {
+            Console.WriteLine("Create Rule Engine");
             XElement engineElement = GetRulesEngineElement();
             GetRuleTypesElement(engineElement);
             GetParser(engineElement);

@@ -61,5 +61,31 @@ namespace MapReduce.Parser.UnitTest {
             Assert.AreEqual(10, result.Details.Count());
             Assert.AreEqual(220, result.Result);
         }
+
+        [TestMethod]
+        public void MapReduceTest() {
+            string xml1 = @"<MapReduce>
+                            <Map>
+                                <MapRule Type = 'MapRuleOnT2' />
+                            </Map>
+                            <Reduce>
+                                <ReduceRule Type = 'ReduceRuleOnT2' />
+                                <ReduceRule Type = 'AssignRuleOnT2' />
+                            </Reduce>
+                        </MapReduce>";
+            Parser parser = xml1.CreateParser("MapReduce");
+            parser.AddContext("MapRuleOnT2", "ClassLibrary1.MapRuleOnT2, ClassLibrary1");
+            parser.AddContext("ReduceRuleOnT2", "ClassLibrary1.ReduceRuleOnT2, ClassLibrary1");
+            parser.AddContext("AssignRuleOnT2", "ClassLibrary1.AssignRuleOnT2, ClassLibrary1");
+            Assert.IsTrue(parser.Build());
+            ParserResult t2result = parser.Result;
+            var parserResult = t2result.Expression;
+            var resultFunc = (Expression<Func<Test2, Test2>>)parserResult;
+
+            Func<Test2, Test2> func = resultFunc.Compile();
+
+            var t1 = new Test2() { B = 10 };
+            Test2 result = func(t1);
+        }
     }
 }

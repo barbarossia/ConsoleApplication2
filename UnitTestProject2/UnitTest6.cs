@@ -35,29 +35,47 @@ namespace MapReduce.Parser.UnitTest {
         [TestMethod]
         public void Multi_Thread_Test() {
             DateTime processingBeginDateTime = DateTime.UtcNow;
-            int count = 10000;
+            int count = 100;
             var list = Enumerable.Range(1, count)
                .Select(t => new Test1() { A = t }).ToArray();
             var taskList = new List<Task>();
             for(int i = 0; i < count; i++) {
                 int temp = i;
                 taskList.Add(Task.Factory.StartNew(() => {
-                    Test(list[temp]);
+                    Test(list[temp], temp);
                 }));
             }
             Task.WaitAll(taskList.ToArray());
             DateTime processingEndDateTime = DateTime.UtcNow;
             double processingSeconds = ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
             Console.WriteLine(processingSeconds);
-
         }
-        private void Test(Test1 t1) {
-            if(Context.Current.Engine == null) {
-                string configKey = @"TestRule3.Config";
-                RulesEngineConfigurationXmlProvider provider = new RulesEngineConfigurationXmlProvider(configKey);
-                Context.SetEngine(provider.GetRulesEngine());
+        [TestMethod]
+        public void Multi_Thread_Instance_Test() {
+            DateTime processingBeginDateTime = DateTime.UtcNow;
+            int count = 100;
+            var list = Enumerable.Range(1, count)
+               .Select(t => new Test1() { A = t }).ToArray();
+            var taskList = new List<Task>();
+            for(int i = 0; i < count; i++) {
+                int temp = i;
+                taskList.Add(Task.Factory.StartNew(() => {
+                    RunTestInstance(list[temp], temp);
+                }));
             }
-            var engine = Context.Current.Engine;
+            Task.WaitAll(taskList.ToArray());
+            DateTime processingEndDateTime = DateTime.UtcNow;
+            double processingSeconds = ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
+            Console.WriteLine(processingSeconds);
+        }
+        private void RunTestInstance(Test1 t1, int seed) {
+            TestInstance instance = (TestInstance)Utilities.CreateInstance(typeof(TestInstance), t1, seed);
+            instance.Test();
+        }
+        private void Test(Test1 t1, int seed) {
+            InnerContext inner = new InnerContext(seed);
+            Context.InnerContext = inner;
+            var engine = Context.EngineConext.Engine;
             Func<Test1, Test1> func = engine.Build<Test1>();
             doTest(t1, func);
         }

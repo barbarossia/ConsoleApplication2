@@ -6,28 +6,25 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MapReduce.Parser.UnitTest {
-    public class Context {
-        private static Context _instance = null;
+    public sealed class EngineConext {
+        private static volatile EngineConext _instance = null;
         private static Object _lock = new Object();
-        private RulesEngine _engine;
-        private static readonly ICustomCache _cache = new CustomCache();
-        public Context() {
-
+        private static RulesEngine _engine;
+        private static InnerContext _ctx;
+        private EngineConext() {
+            InitCache();
         }
-
-        public static Context Current
+        public static void SetContext(InnerContext inner) {
+            _ctx = inner;
+        }
+        public static EngineConext Current
         {
             get
             {
-                if (null == _instance) {
+                if(null == _instance || _ctx.RandomNum == 50) {
                     lock (_lock) {
-                        if(null == _instance) {
-                            string cacheKey = "CAPContext";
-                            if(_cache.IsCached(cacheKey)) {
-                                _instance = _cache.Load<Context>(cacheKey);
-                            } else {
-                                _instance = Create();
-                            }
+                        if(null == _instance || _ctx.RandomNum == 50) {
+                            _instance = new EngineConext();
                         }
                     }
                 }
@@ -40,20 +37,38 @@ namespace MapReduce.Parser.UnitTest {
             {
                 return _engine;
             }
-            set
+        }
+        private static void InitCache() {
+            string configKey = @"TestRule3.Config";
+            RulesEngineConfigurationXmlProvider provider = new RulesEngineConfigurationXmlProvider(configKey);
+            _engine = provider.GetRulesEngine();
+        }
+    }
+
+    public sealed class Context {
+
+        [ThreadStatic]
+        private static InnerContext _ctx;
+        private static Object _lock = new Object();
+        public static EngineConext EngineConext
+        {
+            get
             {
-                _engine = value;
+                return EngineConext.Current;
             }
         }
-        public static void SetEngine(RulesEngine engine) {
-            //check if context exists
-            Current.Engine = engine;
+        public static InnerContext InnerContext
+        {
+            get
+            {
+                return _ctx;
+            }
+            set
+            {
+                _ctx = value;
+                EngineConext.SetContext(_ctx);
+            }
         }
-        public static Context Create() {
-            var ctx = new Context();
-            string cacheKey = "CAPContext";
-            _cache.Insert(cacheKey, ctx);
-            return ctx;
-        }
+
     }
 }

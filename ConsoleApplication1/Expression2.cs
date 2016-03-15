@@ -62,10 +62,9 @@ namespace ConsoleApplication1 {
         }
 
         public static Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> Enumerate<T, TResult>(this Expression<Func<T, TResult>> expr) {
-            var para2 = Expression.Parameter(typeof(IEnumerable<T>));
-            var func = expr.Compile();
-            Expression<Func<IEnumerable<T>, IEnumerable<TResult>>> expr1 = (list2) => list2.Select(l=> func(l));
-            return expr1;
+            var list = Expression.Parameter(typeof(IEnumerable<T>));
+            var res = Expression.Call(typeof(Enumerable), "Select", new Type[] { typeof(T), typeof(TResult)}, list, expr);
+            return Expression.Lambda<Func<IEnumerable<T>, IEnumerable<TResult>>>(res, list);
         }
 
         public static Expression<Func<T, IEnumerable<TResult>>> Concat<T, TMid, TResult>(this Expression<Func<T, IEnumerable<TMid>>> map, Expression<Func<IEnumerable<TMid>, IEnumerable<TResult>>> forach) {
