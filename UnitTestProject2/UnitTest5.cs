@@ -15,7 +15,21 @@ namespace MapReduce.Parser.UnitTest {
             var list = Enumerable.Range(1, 10000)
                .Select(t => new Test1() { A = t });
 
-            Func<Test1, Test1> func = Build();
+            var func = BuildFunc();
+            foreach(var t in list) {
+                doTest(t, func);
+            }
+            DateTime processingEndDateTime = DateTime.UtcNow;
+            double processingSeconds = ProcessTiming.DateDiff("s", processingEndDateTime, processingBeginDateTime);
+            Console.WriteLine(processingSeconds);
+        }
+        [TestMethod]
+        public void PerfermentTestDelegate() {
+            DateTime processingBeginDateTime = DateTime.UtcNow;
+            var list = Enumerable.Range(1, 10000)
+               .Select(t => new Test1() { A = t });
+
+            var func = BuildInvoker();
             foreach(var t in list) {
                 doTest(t, func);
             }
@@ -29,7 +43,7 @@ namespace MapReduce.Parser.UnitTest {
             var list = Enumerable.Range(1, 10000)
                .Select(t => new Test1() { A = t }).ToArray();
 
-            Func<Test1, Test1> func = Build();
+            var func = BuildFunc();
             var taskList = new List<Task>();
             for(int i = 0; i < 10000; i++) {
                 int temp = i;
@@ -45,12 +59,25 @@ namespace MapReduce.Parser.UnitTest {
 
         }
 
+        private void doTest(Test1 t1, Delegate func) {
+            var result = (Test1)func.DynamicInvoke(t1);
+            Assert.AreEqual(100, result.Details.Count());
+            Assert.AreEqual(505000, result.Result);
+        }
         private void doTest(Test1 t1, Func<Test1, Test1> func) {
             var result = func(t1);
             Assert.AreEqual(100, result.Details.Count());
             Assert.AreEqual(505000, result.Result);
         }
-        private Func<Test1, Test1> Build() {
+        private Func<Test1, Test1> BuildFunc() {
+            Expression<Func<Test1, Test1>> expr = (Expression<Func<Test1, Test1>>)Build();
+            return expr.Compile();
+        }
+        private Delegate BuildInvoker() {
+            LambdaExpression expr = Build();
+            return expr.Compile();
+        }
+        private LambdaExpression Build() {
             string xml1 = @"<MapReduce>
                             <Map>
                                 <MapRule Type = 'MapRuleOnT2Test' />
@@ -89,8 +116,9 @@ namespace MapReduce.Parser.UnitTest {
             parser.AddResult("MapReduceOnT2TestRef", t2result);
             Assert.IsTrue(parser.Build());
             var parserResult = parser.Result.Expression;
-            var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
-            return resultFunc.Compile();
+            //var resultFunc = (Expression<Func<Test1, Test1>>)parserResult;
+            //return resultFunc.Compile();
+            return parserResult;
         }
 
     }
